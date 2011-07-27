@@ -17,7 +17,7 @@ setup(name='rhaptos.atompub.plone',
       keywords='',
       author='',
       author_email='',
-      url='http://svn.plone.org/svn/collective/',
+      url='',
       license='GPL',
       packages=find_packages(exclude=['ez_setup']),
       namespace_packages=['rhaptos', 'rhaptos.atompub'],
@@ -25,6 +25,7 @@ setup(name='rhaptos.atompub.plone',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'lxml'
           # -*- Extra requirements: -*-
       ],
       entry_points="""
@@ -33,4 +34,6 @@ setup(name='rhaptos.atompub.plone',
       [z3c.autoinclude.plugin]
       target = plone
       """,
+      setup_requires=["PasteScript"],
+      paster_plugins=["ZopeSkel"],
       )

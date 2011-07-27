@@ -6,8 +6,8 @@
     i18n_domain="rhaptos.atompub.plone">
 
   <five:registerPackage package="." initialize=".initialize" />
+
   <include package=".browser" />
-  <include file="skins.zcml" />
   <include file="profiles.zcml" />
   <i18n:registerTranslations directory="locales" />
 

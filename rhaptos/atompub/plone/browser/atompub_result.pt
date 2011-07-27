@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<entry
+    xmlns="http://www.w3.org/2005/Atom"
+    xmlns:tal="http://xml.zope.org/namespaces/tal"
+    xmlns:metal="http://xml.zope.org/namespaces/metal"
+    tal:define="entry nocall:options/entry">
+    <title tal:content="entry/Title">
+        Atom-Powered Robots Run Amok
+    </title>
+    <id tal:content="entry/getId">
+        new_id
+    </id>
+    <updated tal:content="entry/modified">
+        2003-12-13T18:30:02Z
+    </updated>
+    <author>
+        <name tal:content="entry/Creators">
+            John Doe
+        </name>
+    </author>
+    <content tal:content="entry/getText">
+        Some text.
+    </content>
+    <link rel="edit"
+        href="http://example.org/edit/first-post.atom"
+        tal:attributes="href python:'%s/edit' %entry.absolute_url()"
+    />
+</entry>

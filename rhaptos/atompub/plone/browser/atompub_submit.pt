@@ -1,0 +1,11 @@
+<html>
+    <head>
+        <title>AtomPub submit page</title>
+    </head>
+    <body>
+        <form action="@@atompub" method="post">
+            <textarea name="atompub_xml"></textarea>
+            <input type="submit" name="submit.atompub" value="submit" />
+        </form>
+    </body>
+</html>
