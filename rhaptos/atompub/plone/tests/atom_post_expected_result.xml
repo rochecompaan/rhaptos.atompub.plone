@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<entry xmlns="http://www.w3.org/2005/Atom">
+    <title>Atom-Powered Robots Run Amok</title>
+    <id>Atom-Powered Robots Run Amok</id>
+    <updated>2011/07/27 11:33:29.910811 GMT+2</updated>
+    <author>
+        <name>
+            test_user_1_
+        </name>
+    </author>
+    <content>Some text.</content>
+    <link rel="edit" href="http://nohost/plone/Members/test_user_1_/Atom-Powered%20Robots%20Run%20Amok/edit"/>
+</entry>

@@ -100,6 +100,7 @@ class AtomPubService(BrowserView):
         # get the relevant elements from the DOM
         page_title = self.getPageTitle(root)
         page_content = self.getPageContent(root)
+        page_update_date = self.getPageUpdatedDate(root)
         page_metadata = self.getPageMetaData(root)
 
         # create the necessary objects
@@ -109,6 +110,7 @@ class AtomPubService(BrowserView):
                                             text = page_content,
                                            )
         entry = self.context._getOb(new_id)
+        entry.setModificationDate(page_update_date)
         
         # setup the response
         response = self.request.response
@@ -141,6 +143,14 @@ class AtomPubService(BrowserView):
             return ''
         content = elements[0].firstChild.nodeValue
         return content
+    
+
+    def getPageUpdatedDate(self, element):
+        elements = element.getElementsByTagName('updated')
+        if not elements:
+            return ''
+        updated = elements[0].firstChild.nodeValue
+        return updated
 
 
     def getPageMetaData(self, element):
