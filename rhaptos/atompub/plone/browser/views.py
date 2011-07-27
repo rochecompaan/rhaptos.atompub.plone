@@ -47,6 +47,15 @@ class AtomPubService(BrowserView):
     """
     implements(IAtomPubService)
 
+    IMAGE_CONTENT_TYPES = ['image/gif',
+                           'image/jpeg',
+                           'image/pjpeg',
+                           'image/png',
+                           'image/svg+xml',
+                           'image/tiff',
+                           'image/vnd.microsoft.icon',
+                          ]
+
     STATUS_OK = 201
     STATUS_BADREQUEST = 400
     STATUS_INTERNALSERVER_ERROR = 500
@@ -59,15 +68,16 @@ class AtomPubService(BrowserView):
 
     _atompub_submit_form = ViewPageTemplateFile('atompub_submit.pt')
     _atompub_result = ViewPageTemplateFile('atompub_result.pt')
+    _atompub_media_result = ViewPageTemplateFile('atompub_media_result.pt')
+
 
     def __call__(self):
-        content_type = self.getContentType(self.request)
-        if content_type == 'application/atom+xml;':
+        content_type = self.getContentType(self.request).lower()
+        content_type = content_type.strip(';')
+        if content_type == 'application/atom+xml':
             return self.processAtomPubBody(self.request)
-        if content_type == 'application/octetstream;':
-            # Would be better as a 501 - HTTPNotImplemented
-            error_code = self.STATUS_NOTIMPLEMENTED
-            self.raiseException(request, HTTPError, error_code)
+        if content_type in self.IMAGE_CONTENT_TYPES:
+            return self.processImageMediaBody(self.request)
         
         # Clearly we did not understand the request.
         # We should probably raise a:
@@ -78,6 +88,35 @@ class AtomPubService(BrowserView):
         self.raiseException(request, HTTPError, error_code)
         return 'Nothing to do'
     
+
+    def processImageMediaBody(self, request):
+        """
+        Get the image binary data from the request body.
+        Create an image object.
+        Add the binary data to it.
+        Update metadata if necessary.
+        Return a AtomPub representation.
+        """
+        # we start off believing all is well
+        status = self.STATUS_OK
+            
+        # grab the binary data
+        content = self.getBody(self.request)
+        slug = self.getSlug(self.request)
+
+        new_id = self.context.invokeFactory('Image',
+                                            id = slug,
+                                            title = slug,
+                                            image = content)
+        entry = self.context._getOb(new_id)
+
+        # get the result
+        result = self._atompub_media_result(entry=entry)
+        # setup the response
+        self.setupResponse(self.request, entry, status, result)
+        # return the result
+        return result
+
 
     def processAtomPubBody(self, request):
         """
@@ -110,19 +149,26 @@ class AtomPubService(BrowserView):
                                             text = page_content,
                                            )
         entry = self.context._getOb(new_id)
+        # we want the modification date exactly like it was posted
         entry.setModificationDate(page_update_date)
         
-        # setup the response
-        response = self.request.response
+        # get the result
         result = self._atompub_result(entry=entry)
-        location = '%s/edit' %entry.absolute_url()
+        # setup the response
+        self.setupResponse(self.request, entry, status, result)
+        # return the result
+        return result
 
+
+    def setupResponse(self, request, item, status, result):
+        response = request.response
+        location = '%s/edit' %item.absolute_url()
         response.setHeader('status', '%s %s' %(status, self._messages[status]))
         response.setHeader('Content-Length', len(result))
-        response.setHeader('Content-Type', 'application/atom+xml;type=entry;charset="utf-8"')
+        response.setHeader('Content-Type',
+                           'application/atom+xml;type=entry;charset="utf-8"')
         response.setHeader('Location', location)
-
-        return result
+        return response
     
 
     def getPageTitle(self, element):
@@ -175,6 +221,11 @@ class AtomPubService(BrowserView):
     def getBody(self, request):
         body = request.get('body', request.get('BODY', None))
         return body
+
+
+    def getSlug(self, request):
+        slug = request.get('Slug', request.get('slug', ''))
+        return slug
 
 
     def raiseException(self, request, error_type, error_code):

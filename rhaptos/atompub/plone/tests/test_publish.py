@@ -17,6 +17,7 @@ from rhaptos.atompub.plone.browser.views import AtomPubService
 BAD_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/bad_atom.xml'
 GOOD_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/good_atom.xml'
 EXPECTED_RESULT = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/atom_post_expected_result.xml'
+JPEG_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/beach.jpeg'
 
 
 ZopeTestCase.installProduct('rhaptos.atompub.plone', quiet=1)
@@ -67,6 +68,25 @@ class TestAtomPub(PloneTestCase.FunctionalTestCase):
 
         result_dom = parseString(result)
         self._compareResultToExpectedValues(result_dom, expected_dom)
+
+
+    def test_UploadImage(self):
+        import pdb;pdb.set_trace()
+        context = self.folder
+        request = self.portal.REQUEST
+        
+        image_file = open(JPEG_FILE, 'rb')
+        image_content = image_file.read()
+        image_file.close()
+
+        request['method'] = 'POST'
+        request['Content-Type'] = 'image/jpeg;'
+        request['Content-Length'] = len(image_content)
+        request['Slug'] = 'The Beach'
+        request['BODY'] = image_content
+
+        view = AtomPubService(context, request)
+        results = view()
 
 
     def _getAtomPubBrowserView(self, xml_payload):
