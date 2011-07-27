@@ -18,7 +18,7 @@
             John Doe
         </name>
     </author>
-    <content tal:content="entry/getText">
+    <content tal:content="entry/getRawText">
         Some text.
     </content>
     <link rel="edit"

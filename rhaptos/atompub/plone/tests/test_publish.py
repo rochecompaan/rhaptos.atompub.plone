@@ -17,7 +17,13 @@ from rhaptos.atompub.plone.browser.views import AtomPubService
 BAD_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/bad_atom.xml'
 GOOD_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/good_atom.xml'
 EXPECTED_RESULT = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/atom_post_expected_result.xml'
+GIF_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/beach.gif'
 JPEG_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/beach.jpeg'
+PJPEG_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/beach.pjpeg'
+PNG_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/beach.png'
+SVG_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/beach.svg'
+TIFF_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/beach.tiff'
+ICO_FILE = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/beach.ico'
 
 
 ZopeTestCase.installProduct('rhaptos.atompub.plone', quiet=1)
@@ -70,23 +76,50 @@ class TestAtomPub(PloneTestCase.FunctionalTestCase):
         self._compareResultToExpectedValues(result_dom, expected_dom)
 
 
-    def test_UploadImage(self):
-        import pdb;pdb.set_trace()
+    def _test_UploadImage(self, filename, imagetype):
         context = self.folder
         request = self.portal.REQUEST
         
-        image_file = open(JPEG_FILE, 'rb')
+        image_file = open(filename, 'rb')
         image_content = image_file.read()
         image_file.close()
 
         request['method'] = 'POST'
-        request['Content-Type'] = 'image/jpeg;'
+        request['Content-Type'] = imagetype 
         request['Content-Length'] = len(image_content)
         request['Slug'] = 'The Beach'
         request['BODY'] = image_content
 
         view = AtomPubService(context, request)
         results = view()
+
+
+    def test_UploadGif(self):
+        self._test_UploadImage(GIF_FILE, 'image/gif')
+
+
+    def test_UploadJpeg(self):
+        self._test_UploadImage(JPEG_FILE, 'image/jpeg')
+
+
+    def test_UploadPjpeg(self):
+        self._test_UploadImage(JPEG_FILE, 'image/pjpeg')
+
+
+    def test_UploadPng(self):
+        self._test_UploadImage(PNG_FILE, 'image/png')
+
+
+    def test_UploadSvg(self):
+        self._test_UploadImage(SVG_FILE, 'image/svg+xml')
+
+
+    def test_UploadTiff(self):
+        self._test_UploadImage(TIFF_FILE, 'image/tiff')
+
+
+    def test_UploadIco(self):
+        self._test_UploadImage(ICO_FILE, 'image/vnd.microsoft.icon')
 
 
     def _getAtomPubBrowserView(self, xml_payload):
