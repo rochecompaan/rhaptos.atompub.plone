@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<entry xmlns="http://www.w3.org/2005/Atom"
+    xmlns:tal="http://xml.zope.org/namespaces/tal"
+    xmlns:metal="http://xml.zope.org/namespaces/metal"
+    tal:define="entry nocall:options/entry;
+                url entry/absolute_url;">
+
+    <title tal:content="entry/Title">
+        The Beach
+    </title>
+
+    <id tal:content="entry/getId">
+        urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a
+    </id>
+
+    <updated tal:content="entry/modified">
+        2005-10-07T17:17:08Z
+    </updated>
+
+    <author>
+        <name tal:content="entry/Creators">
+            Daffy
+        </name>
+    </author>
+
+    <summary type="text" />
+
+    <content 
+        type="entry/png"
+        tal:attributes="type entry/content_type;
+                        src url" 
+        src="http://media.example.org/the_beach.png"
+        />
+
+    <link
+        rel="edit-media"
+        href="http://media.example.org/edit/the_beach.png" 
+        tal:attributes="href python:'%s/edit' %url"
+        />
+
+    <link rel="edit"
+        href="http://example.org/media/edit/the_beach.atom"
+        tal:attributes="href python:'%s/%s.atom' %(url, entry.Title())"
+        />
+
+</entry>

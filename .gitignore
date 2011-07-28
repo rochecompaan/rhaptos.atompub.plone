@@ -1,0 +1,13 @@
+*.pyc
+.~lock.*
+tags
+.installed.cfg
+bin/
+develop-eggs/
+downloads/
+fake-eggs/
+include/
+lib/
+parts/
+var/
+rhaptos.atompub.plone.egg-info/

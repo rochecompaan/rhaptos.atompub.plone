@@ -1,0 +1,27 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    i18n_domain="rhaptos.atompub.plone">
+
+  <interface
+      interface=".interfaces.IThemeSpecific"
+      type="zope.publisher.interfaces.browser.IBrowserSkinType"
+      name="Rhaptos AtomPub Plone Theme"
+      />
+  
+  <browser:page
+      for="*"
+      name="atompub-submit-form"
+      class=".views.AtomPubService"
+      attribute="atompub_submit_form"
+      permission="zope2.View"
+      />
+
+  <browser:page
+      for="*"
+      name="atompub"
+      class=".views.AtomPubService"
+      permission="zope2.View"
+      />
+
+</configure>
