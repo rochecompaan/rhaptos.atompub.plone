@@ -11,14 +11,6 @@
   
   <browser:page
       for="*"
-      name="atompub-submit-form"
-      class=".views.AtomPubService"
-      attribute="atompub_submit_form"
-      permission="zope2.View"
-      />
-
-  <browser:page
-      for="*"
       name="atompub"
       class=".views.AtomPubService"
       permission="zope2.View"

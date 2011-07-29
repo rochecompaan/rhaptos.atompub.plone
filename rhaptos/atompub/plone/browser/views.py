@@ -1,9 +1,7 @@
-import zipfile
-from urllib2 import HTTPError
 from xml.dom.minidom import parseString
 from xml.parsers.expat import ExpatError
-import lxml
 
+from Acquisition import aq_base
 from zope.interface import Interface, implements
 
 from Products.Five import BrowserView
@@ -11,202 +9,106 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
 
+METADATA_MAPPING = {'slug': 'title',
+                    'name': 'creator',
+                   }
+
+ATOMPUB_CONTENT_TYPE = 'application/atom+xml'
+
 
 class IAtomPubService(Interface):
     """ Marker interface for AtomPuv service """
 
 class AtomPubService(BrowserView):
-    """
-    HTTPErrors
-      HTTPClientError
-        * 400 - HTTPBadRequest
-        * 401 - HTTPUnauthorized
-        * 402 - HTTPPaymentRequired
-        * 403 - HTTPForbidden
-        * 404 - HTTPNotFound
-        * 405 - HTTPMethodNotAllowed
-        * 406 - HTTPNotAcceptable
-        * 407 - HTTPProxyAuthenticationRequired
-        * 408 - HTTPRequestTimeout
-        * 409 - HTTPConfict
-        * 410 - HTTPGone
-        * 411 - HTTPLengthRequired
-        * 412 - HTTPPreconditionFailed
-        * 413 - HTTPRequestEntityTooLarge
-        * 414 - HTTPRequestURITooLong
-        * 415 - HTTPUnsupportedMediaType
-        * 416 - HTTPRequestRangeNotSatisfiable
-        * 417 - HTTPExpectationFailed
-      HTTPServerError
-        * 500 - HTTPInternalServerError
-        * 501 - HTTPNotImplemented
-        * 502 - HTTPBadGateway
-        * 503 - HTTPServiceUnavailable
-        * 504 - HTTPGatewayTimeout
-        * 505 - HTTPVersionNotSupported
+    """ Accept a POST, use the content type registry to figure out what type
+        to create.
+        Mangle the headers and body to fit the type created.
+        Call the PUT method to finalise the object creation.
+        Return a representation of the object based on the type that was
+        created.
     """
     implements(IAtomPubService)
 
-    IMAGE_CONTENT_TYPES = ['image/gif',
-                           'image/jpeg',
-                           'image/pjpeg',
-                           'image/png',
-                           'image/svg+xml',
-                           'image/tiff',
-                           'image/vnd.microsoft.icon',
-                          ]
-
-    STATUS_OK = 201
-    STATUS_BADREQUEST = 400
-    STATUS_INTERNALSERVER_ERROR = 500
-    STATUS_NOTIMPLEMENTED = 501
-    _messages = {STATUS_OK: 'Created',
-                 STATUS_BADREQUEST: 'Submit a valid form.',
-                 STATUS_INTERNALSERVER_ERROR: 'Invalid XML',
-                 STATUS_NOTIMPLEMENTED: 'Not implemented',
-                }
-
-    _atompub_submit_form = ViewPageTemplateFile('atompub_submit.pt')
     _atompub_result = ViewPageTemplateFile('atompub_result.pt')
     _atompub_media_result = ViewPageTemplateFile('atompub_media_result.pt')
 
 
     def __call__(self):
-        content_type = self.getContentType(self.request).lower()
-        content_type = content_type.strip(';')
-        if content_type == 'application/atom+xml':
-            return self.processAtomPubBody(self.request)
-        if content_type in self.IMAGE_CONTENT_TYPES:
-            return self.processImageMediaBody(self.request)
+        context = self.context.aq_inner
+        request = self.request
+
+        content_type = self._getContentType(request).strip(';')
+        prefix = self._getPrefix(content_type)
+        name = context.generateUniqueId(prefix)
+
+        body = self._getBody(request)
+
+        obj = self._createObject(context, request, name, content_type, body)
+        if not obj: return None
         
-        # Clearly we did not understand the request.
-        # We should probably raise a:
-        # 400 - HTTPBadRequest
-        # or
-        # 501 - HTTPNotImplemented
-        error_code = self.STATUS_NOTIMPLEMENTED
-        self.raiseException(request, HTTPError, error_code)
+        # fix the request headers to get the correct metadata mappings
+        request = self._updateRequest(request, content_type, body)
+
+        # finalise the creation by using the PUT method
+        import pdb;pdb.set_trace()
+        obj.PUT(request, request.RESPONSE)
+
+        # return the correct result based on the content type
+        if content_type == ATOMPUB_CONTENT_TYPE:
+            result = self._atompub_result(entry=obj)
+            return result
+        else:
+            result = _atompub_media_result(entry=obj)
+            return result
+
         return 'Nothing to do'
+
     
-
-    def processImageMediaBody(self, request):
+    def _createObject(self, context, request, name, content_type, body):
+        """ This code was adapted from:
+            Products.CMFCore.PortaFolder.PUT_factory
         """
-        Get the image binary data from the request body.
-        Create an image object.
-        Add the binary data to it.
-        Update metadata if necessary.
-        Return a AtomPub representation.
+        registry = getToolByName(context, 'content_type_registry', None)
+        if registry is None:
+            return None
+
+        typeObjectName = registry.findTypeName(name, content_type, body)
+        if typeObjectName is None:
+            return None
+
+        context.invokeFactory(typeObjectName, name)
+
+        # invokeFactory does too much, so the object has to be removed again
+        obj = aq_base(context._getOb(name))
+        context._delObject(name)
+        return obj
+
+
+    def _getPageName(self, element, request, context):
+        """ We will either have a title in the headers or a 'slug'
+            that we can use as the name. If neither exists, we can make up
+            a name with something like generateUniqueId.
         """
-        # we start off believing all is well
-        status = self.STATUS_OK
-            
-        # grab the binary data
-        content = self.getBody(self.request)
-        slug = self.getSlug(self.request)
-
-        new_id = self.context.invokeFactory('Image',
-                                            id = slug,
-                                            title = slug,
-                                            image = content)
-        entry = self.context._getOb(new_id)
-
-        # get the result
-        result = self._atompub_media_result(entry=entry)
-        # setup the response
-        self.setupResponse(self.request, entry, status, result)
-        # return the result
-        return result
-
-
-    def processAtomPubBody(self, request):
-        """
-        Grab the body from the request, parse it. Then walk the tree
-        and create the objects as required.
-        """
-        # we start off believing all is well
-        status = self.STATUS_OK
-
-        # get the xml
-        content = self.getBody(self.request)
-
-        # get the DOM from the xml
-        try:
-            root = parseString(content)
-        except ExpatError, e:
-            error_code = self.STATUS_INTERNALSERVER_ERROR
-            self.raiseException(request, HTTPError, error_code)
-
-        # get the relevant elements from the DOM
-        page_title = self.getPageTitle(root)
-        page_content = self.getPageContent(root)
-        page_update_date = self.getPageUpdatedDate(root)
-        page_metadata = self.getPageMetaData(root)
-
-        # create the necessary objects
-        new_id = self.context.invokeFactory('Document',
-                                            id = page_title,
-                                            title = page_title,
-                                            text = page_content,
-                                           )
-        entry = self.context._getOb(new_id)
-        # we want the modification date exactly like it was posted
-        entry.setModificationDate(page_update_date)
-        
-        # get the result
-        result = self._atompub_result(entry=entry)
-        # setup the response
-        self.setupResponse(self.request, entry, status, result)
-        # return the result
-        return result
-
-
-    def setupResponse(self, request, item, status, result):
-        response = request.response
-        location = '%s/edit' %item.absolute_url()
-        response.setHeader('status', '%s %s' %(status, self._messages[status]))
-        response.setHeader('Content-Length', len(result))
-        response.setHeader('Content-Type',
-                           'application/atom+xml;type=entry;charset="utf-8"')
-        response.setHeader('Location', location)
-        return response
-    
-
-    def getPageTitle(self, element):
+        title = None
         elements = element.getElementsByTagName('title')
-        if not elements:
-            return ''
-        title = elements[0].firstChild.nodeValue
+        if elements:
+            title = elements[0].firstChild.nodeValue
+        else:
+            title = self._getSlug(request)
+        if title is None:
+            title = context.generateUniqueId('atompub')
         return title
 
-    
-    def getPageId(self):
-        return self.context.generateUniqueId('atompub')
+
+    def _getSlug(self, request):
+        slug = request.get('Slug', request.get('slug', ''))
+        return slug
 
 
-    def getPageContent(self, element):
-        elements = element.getElementsByTagName('content')
-        if not elements:
-            return ''
-        content = elements[0].firstChild.nodeValue
-        return content
-    
-
-    def getPageUpdatedDate(self, element):
-        elements = element.getElementsByTagName('updated')
-        if not elements:
-            return ''
-        updated = elements[0].firstChild.nodeValue
-        return updated
-
-
-    def getPageMetaData(self, element):
-        return {'Title': self.getPageTitle(element)}
-
-
-    def getContentType(self, request):
+    def _getContentType(self, request):
         """
         TODO:
-        Figure out why my Content_Type is going missing in the during testing.
+        Figure out why my Content_Type is going missing during testing.
         """
         content_type = request.get('Content-Type',
                                    request.get('content-type', None))
@@ -218,27 +120,58 @@ class AtomPubService(BrowserView):
         return content_type
 
 
-    def getBody(self, request):
+    def _getBody(self, request):
         body = request.get('body', request.get('BODY', None))
         return body
+    
+    
+    def _updateRequest(self, request, content_type, body):
+        # first we update the headers
+        request = self._changeHeaderNames(request, METADATA_MAPPING)
+
+        # then we update the body of the request
+        if content_type == ATOMPUB_CONTENT_TYPE:
+            # update headers from the request body
+            dom = parseString(body)
+            request = self._addHeadersFromDOM(request, dom, METADATA_MAPPING)
+            body = self._getHtmlBodyFromDOM(dom)
+        request['BODYFILE'] = body
+
+        return request
+   
+
+    def _changeHeaderNames(self, request, mappings):
+        for old_key, new_key in mappings.items():
+            value = request.get(old_key, None)
+            if value:
+                request.pop(old_key)
+                request.set(new_key, value)
+        return request
 
 
-    def getSlug(self, request):
-        slug = request.get('Slug', request.get('slug', ''))
-        return slug
+    def _addHeadersFromDOM(self, request, dom, mappings):
+        for key in mappings.keys():
+            value = self._getValueFromDOM(key, dom)
+            if value is not None:
+                request.set(key, value)
+        return request
 
 
-    def raiseException(self, request, error_type, error_code):
-        full_url = self.request['ACTUAL_URL']
-        response = self.request.response
-        headers = response.headers
-        raise error_type(full_url,
-                         error_code,
-                         self._messages[error_code],
-                         headers,
-                         None
-                        )
+    def _getValueFromDOM(self, name, dom):
+        value = None
+        elements = dom.getElementsByTagName(name)
+        if elements:
+            value = elements[0].firstChild.nodeValue
+        return value
 
 
-    def atompub_submit_form(self):
-        return self._atompub_submit_form()
+    def _getHtmlBodyFromDOM(self, dom):
+        return self._getValueFromDOM('content', dom)
+
+    
+    def _getPrefix(self, seed):
+        tmp_name = seed.replace('/', '_')
+        tmp_name = tmp_name.replace('+', '_')
+        tmp_name = tmp_name.strip(';')
+        return tmp_name
+

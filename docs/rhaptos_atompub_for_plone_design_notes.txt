@@ -1,6 +1,6 @@
 Rhaptos AtomPub for Plone
 
-    What it is:
+    What it is
 
         A barebones, implementation of the specification:
         http://tools.ietf.org/html/rfc5023
@@ -10,7 +10,37 @@ Rhaptos AtomPub for Plone
         - GET (not done)
         - DELETE (not done)
 
-    Open issues:
+    
+    Background reading
+
+        NullResource in webdav package
+        Izak's SWORD service implementation
+        Archetypes BaseUnit
+        Producst MimeTypesRegistry
+        - classify method
+        - define new mime type for atom xml (classifier)
+        - implements IClassify + classify method
+        - register method (IMimeType)
+
+    AtomPub implemenation
+
+        Atom mimetype register (MimeTypesRegistry.register)
+        content type registry: atompub map to document
+        what about AtomPub specific metadata?
+        - custom classifier?
+        - transfor AtomPub metdata into frc822 style metadata
+
+        get content type form ct registry
+        - register a new predicate
+        - atompub+xml to point to ATDocument
+        create the object
+        - cf Products.CMFCore.PortaFolder.PUT_factory
+        fix body in request
+        call PUT on new object
+        manipulate the response to change the body to that of the AtomPub
+        result template
+
+    Open issues
         
         IRI conversion to URI
 

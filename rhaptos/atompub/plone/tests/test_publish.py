@@ -8,6 +8,7 @@ import zope.interface
 from urllib2 import HTTPError
 import DateTime
 from xml.dom.minidom import parseString
+from xml.parsers.expat import ExpatError
 
 from Testing import ZopeTestCase
 from Products.CMFPlone.tests import PloneTestCase
@@ -53,7 +54,7 @@ class TestAtomPub(PloneTestCase.FunctionalTestCase):
         xml_file.close()
 
         view = self._getAtomPubBrowserView(bad_xml)
-        self.failUnlessRaises(HTTPError, view)
+        self.failUnlessRaises(ExpatError, view)
 
 
     def test_publishGoodAtomXML(self):
