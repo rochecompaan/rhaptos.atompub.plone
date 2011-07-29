@@ -12,7 +12,7 @@
   <browser:page
       for="*"
       name="atompub"
-      class=".views.AtomPubService"
+      class=".atompub.AtomPubService"
       permission="zope2.View"
       />
 
