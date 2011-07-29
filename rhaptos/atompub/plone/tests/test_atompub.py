@@ -25,7 +25,7 @@ from rhaptos.atompub.plone.browser.atompub import AtomPubService
 # replace ../../ with os.cwd
 # move files into data subdir
 
-PATH_PREFIX = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/'
+PATH_PREFIX = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/data/'
 
 BAD_FILE = PATH_PREFIX + 'bad_atom.xml'
 GOOD_FILE = PATH_PREFIX + 'good_atom.xml'
