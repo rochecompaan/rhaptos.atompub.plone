@@ -1,3 +1,5 @@
+from cStringIO import StringIO
+
 from xml.dom.minidom import parse
 from xml.parsers.expat import ExpatError
 
@@ -37,9 +39,12 @@ class AtomPubService(BrowserView):
         created.
     """
     implements(IAtomPubService)
-
-    _atompub_result = ViewPageTemplateFile('atompub_result.pt')
-    _atompub_media_result = ViewPageTemplateFile('atompub_media_result.pt')
+    
+    # As specified by: http://bitworking.org/projects/atom/rfc5023.html#crwp
+    # the answwer to a successful POST one must return a:
+    # Atom Entry Document
+    atom_entry_document = ViewPageTemplateFile('atom_entry_document.pt')
+    atompub_media_result = ViewPageTemplateFile('atompub_media_result.pt')
 
 
     def __call__(self):
@@ -49,14 +54,24 @@ class AtomPubService(BrowserView):
                                   IAtomPubServiceAdapter
                                  )
         obj = adapter()
+        # TODO: some error messaging is in order here.
+        # look at the rhaptos.swordservice.plone.sword.py decorator:
+        # @show_error_document, maybe use that to decorate our __call__
+        if not obj: return
         
-        content_type = self.request.getHeader('content-type').strip(';')
+        # set the Location header as required by rfc5023, section: 9.2 
+        # 'Creating Resources with POST'
+        response = self.request.response
+        response.setHeader('Location', '%s/edit' % obj.absolute_url())
+        response.setStatus(201)
+
         # return the correct result based on the content type
+        content_type = self.request.getHeader('content-type').strip(';')
         if content_type == ATOMPUB_CONTENT_TYPE:
-            result = self._atompub_result(entry=obj)
+            result = self.atom_entry_document(entry=obj)
             return result
         else:
-            result = self._atompub_media_result(entry=obj)
+            result = self.atompub_media_result(entry=obj)
             return result
 
         return 'Nothing to do'
@@ -79,17 +94,17 @@ class PloneFolderAtomPubAdapter(object):
         prefix = self._getPrefix(content_type)
         name = context.generateUniqueId(prefix)
 
+        # fix the request headers to get the correct metadata mappings
+        request = self._updateRequest(request, content_type)
+
         nullresouce = NullResource(context, name, request)
         nullresouce.__of__(context)
         nullresouce.PUT(request, response)
 
-        # fix the request headers to get the correct metadata mappings
-        request = self._updateRequest(request, content_type)
-
         # Look it up and finish up, then return it.
         obj = context._getOb(name)
         obj.PUT(request, response)
-        obj.setTitle(request['Title'])
+        obj.setTitle(request.get('Title', name))
         obj.reindexObject(idxs='Title')
         return obj
 
@@ -112,8 +127,8 @@ class PloneFolderAtomPubAdapter(object):
             body = self._getValueFromDOM('content', dom)
             title = self._getValueFromDOM('title', dom)
             request['Title'] = title
-            request['BODY'] = body
-
+            body_file = StringIO(body.encode('utf-8'))
+            request['BODYFILE'] = body_file
         return request
    
 
