@@ -1,3 +1,5 @@
+from Products.CMFCore.utils import getToolByName
+
 def setupVarious(context):
 
     # Ordinarily, GenericSetup handlers check for the existence of XML files.
@@ -9,3 +11,9 @@ def setupVarious(context):
         return
 
     # Add additional setup code here
+    site = context.getSite()
+    ctr = getToolByName(site, 'content_type_registry')
+    ids = ctr.predicate_ids
+    if 'atom+xml' not in ids:
+        ctr.addPredicate('atom+xml', 'major_minor')
+    ctr.reorderPredicate('atom+xml', 0)
