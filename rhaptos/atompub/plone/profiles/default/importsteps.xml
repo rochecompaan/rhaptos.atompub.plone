@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<import-steps>
+
+ <import-step 
+    id="rhaptos.atompub.plone.setup_various" 
+    handler="rhaptos.atompub.plone.setuphandlers.setupVarious"
+    title="Do miscellaneous setup for rhaptos.atompub.plone."
+    version="2011-08-01">
+   <dependency step="rhaptos.atompub.plone-QI-dependencies"/>
+   Do miscellaneous setup for rhaptos.atompub.plone.
+ </import-step>
+
+</import-steps>
