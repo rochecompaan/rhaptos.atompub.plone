@@ -1,16 +1,25 @@
-from xml.dom.minidom import parseString
+from xml.dom.minidom import parse
 from xml.parsers.expat import ExpatError
 
-from Acquisition import aq_base
+from Acquisition import aq_inner
+
 from zope.interface import Interface, implements
+from zope.publisher.interfaces.http import IHTTPRequest
+from zope.component import adapts, getMultiAdapter, queryUtility
+
+from webdav.NullResource import NullResource
 
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
+from Products.CMFCore.interfaces import IFolderish
 from Products.CMFCore.utils import getToolByName
+
+from rhaptos.atompub.plone.interfaces import IAtomPubServiceAdapter
 
 METADATA_MAPPING = {'slug': 'title',
                     'name': 'creator',
+                    'abstract': 'description',
                    }
 
 ATOMPUB_CONTENT_TYPE = 'application/atom+xml'
@@ -34,6 +43,34 @@ class AtomPubService(BrowserView):
 
 
     def __call__(self):
+        # Adapt and call
+        adapter = getMultiAdapter((aq_inner(self.context),
+                                  self.request),
+                                  IAtomPubServiceAdapter
+                                 )
+        obj = adapter()
+        
+        content_type = self.request.getHeader('content-type').strip(';')
+        # return the correct result based on the content type
+        if content_type == ATOMPUB_CONTENT_TYPE:
+            result = self._atompub_result(entry=obj)
+            return result
+        else:
+            result = self._atompub_media_result(entry=obj)
+            return result
+
+        return 'Nothing to do'
+    
+
+class PloneFolderAtomPubAdapter(object):
+    adapts(IFolderish, IHTTPRequest)
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+
+    def __call__(self):
         context = self.context
         request = self.request
         response = request.response
@@ -42,60 +79,40 @@ class AtomPubService(BrowserView):
         prefix = self._getPrefix(content_type)
         name = context.generateUniqueId(prefix)
 
-        body = request.get('body', request.get('BODY', None))
+        nullresouce = NullResource(context, name, request)
+        nullresouce.__of__(context)
+        nullresouce.PUT(request, response)
 
-        obj = self._createObject(context, request, name, content_type, body)
-        if not obj: return None
-        
         # fix the request headers to get the correct metadata mappings
-        request = self._updateRequest(request, content_type, body)
+        request = self._updateRequest(request, content_type)
 
-        # finalise the creation by using the PUT method
-        obj.__of__(context)
+        # Look it up and finish up, then return it.
+        obj = context._getOb(name)
         obj.PUT(request, response)
-
-        # return the correct result based on the content type
-        if content_type == ATOMPUB_CONTENT_TYPE:
-            result = self._atompub_result(entry=obj)
-            return result
-        else:
-            result = _atompub_media_result(entry=obj)
-            return result
-
-        return 'Nothing to do'
-
-    
-    def _createObject(self, context, request, name, content_type, body):
-        """ This code was adapted from:
-            Products.CMFCore.PortaFolder.PUT_factory
-        """
-        registry = getToolByName(context, 'content_type_registry', None)
-        if registry is None:
-            return None
-
-        typeObjectName = registry.findTypeName(name, content_type, body)
-        if typeObjectName is None:
-            return None
-
-        context.invokeFactory(typeObjectName, name)
-
-        # invokeFactory does too much, so the object has to be removed again
-        obj = aq_base(context._getOb(name))
-        context._delObject(name)
+        obj.setTitle(request['Title'])
+        obj.reindexObject(idxs='Title')
         return obj
 
-
-    def _updateRequest(self, request, content_type, body):
+    
+    def _updateRequest(self, request, content_type):
+        """ The body.seek(0) looks funny, but I do that to make sure whatever
+            tries to access the buffer after me can start from the beginning.
+        """
         # first we update the headers
         request = self._changeHeaderNames(request, METADATA_MAPPING)
-
+        
         # then we update the body of the request
         if content_type == ATOMPUB_CONTENT_TYPE:
+            body = request.get('BODYFILE')
             # update headers from the request body
-            dom = parseString(body)
+            # make sure we read from the beginning
+            body.seek(0)
+            dom = parse(body)
             request = self._addHeadersFromDOM(request, dom, METADATA_MAPPING)
             body = self._getValueFromDOM('content', dom)
-        request['BODY'] = body
+            title = self._getValueFromDOM('title', dom)
+            request['Title'] = title
+            request['BODY'] = body
 
         return request
    
@@ -133,4 +150,5 @@ class AtomPubService(BrowserView):
         tmp_name = tmp_name.replace('+', '_')
         tmp_name = tmp_name.strip(';')
         return tmp_name
+
 
