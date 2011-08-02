@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<object name="content_type_registry" meta_type="Content Type Registry">
+ <predicate name="atom+xml" content_type_name="Document"
+    predicate_type="major_minor">
+  <argument value="application"/>
+  <argument value="atom+xml"/>
+ </predicate>
+</object>
