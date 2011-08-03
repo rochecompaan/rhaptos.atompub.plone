@@ -169,6 +169,9 @@ class TestAtomPub(PloneTestCase.FunctionalTestCase):
         self.assertEqual(self.getContent(result_dom),
                          self.getContent(expected_dom))
 
+        self.assertEqual(self._getValueFromDOM('title', result_dom),
+                         self._getValueFromDOM('title', expected_dom))
+
 
     def _getValueFromDOM(self, name, dom):
         value = None

@@ -17,30 +17,37 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.interfaces import IFolderish
 from Products.CMFCore.utils import getToolByName
 
+from Products.CMFPlone.PloneTool import METADATA_DCNAME, METADATA_DC_AUTHORFIELDS
+
 from Products.Archetypes.Marshall import formatRFC822Headers
 
 from rhaptos.atompub.plone.interfaces import IAtomPubServiceAdapter
 
-METADATA_MAPPING = {'name': 'creator',
-                    'abstract': 'description',
-                    'dcterms:subject': 'subject',
-                    'dcterms:abstract': 'abstract',
+METADATA_MAPPING = {'dcterms:title': 'Title',
+                    'dcterms:sub': 'Subject',
+                    'dcterms:subject': 'Subject',
+                    'dcterms:publisher': 'Publisher',
+                    'dcterms:description': 'Description',
+                    'dcterms:creators': 'Creators',
+                    'dcterms:effective_date': 'effective_date',
+                    'dcterms:expiration_date': 'expiration_date',
+                    'dcterms:type': 'Type',
+                    'dcterms:format': 'Format',
+                    'dcterms:language': 'Language',
+                    'dcterms:rights': 'Rights',
                     'dcterms:accessRights': 'accessRights',
+                    'dcterms:rightsHolder': 'rightsHolder',
+                    'dcterms:abstract': 'abstract',
                     'dcterms:alternative': 'alternative',
                     'dcterms:available': 'available',
                     'dcterms:bibliographicCitation': 'bibliographicCitation',
-                    'dcterms:contributor': 'contributor',
-                    'dcterms:description': 'description',
+                    'dcterms:contributor': 'Contributors',
                     'dcterms:hasPart': 'hasPart',
                     'dcterms:hasVersion': 'hasVersion',
                     'dcterms:identifier': 'identifier',
                     'dcterms:isPartOf': 'isPartOf',
-                    'dcterms:publisher': 'publisher',
                     'dcterms:references': 'references',
-                    'dcterms:rightsHolder': 'rightsHolder',
                     'dcterms:source': 'source',
-                    'dcterms:title': 'title',
-                    'dcterms:type': 'type',
                    }
 
 ATOMPUB_CONTENT_TYPE = 'application/atom+xml'
@@ -82,7 +89,7 @@ class AtomPubService(BrowserView):
         # set the Location header as required by rfc5023, section: 9.2 
         # 'Creating Resources with POST'
         response = self.request.response
-        response.setHeader('Location', '%s/edit' % obj.absolute_url())
+        response.setHeader('Location', '%s/atompub/edit' % obj.absolute_url())
         response.setStatus(201)
 
         # return the correct result based on the content type
@@ -95,6 +102,17 @@ class AtomPubService(BrowserView):
             return result
 
         return 'Nothing to do'
+
+
+    def metadata(self, item):
+        return item.getMetadataHeaders()
+
+
+    def formatMetadata(self, data):
+        # <dcterms:title>Title</dcterms:title>
+        name = data[0].lower()
+        content = data[1]
+        return '<dcterms:%s>%s</dcterms:%s>' %(name, content, name)
     
 
 class PloneFolderAtomPubAdapter(object):
@@ -159,7 +177,9 @@ class PloneFolderAtomPubAdapter(object):
         headers = []
         for name in mappings.keys():
             value = dom.getElementsByTagName(name)
-            value = '\n'.join([str(v.firstChild.nodeValue) for v in value])
+            value = '\n'.join([str(v.firstChild.nodeValue) for v in value \
+                               if v.firstChild is not None]
+                             )
             headers.append((mappings[name], str(value)))
         return headers
 

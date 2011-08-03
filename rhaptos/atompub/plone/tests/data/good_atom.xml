@@ -8,21 +8,29 @@
   <content>Some text.</content>
   <!-- some embedded metadata -->
   <dcterms:sub>The abstract</dcterms:sub>
-  <dcterms:abstract>The abstract</dcterms:abstract>
+  <dcterms:subject>Subject 1</dcterms:subject>
+  <dcterms:publisher>Publisher</dcterms:publisher>
+  <dcterms:description>Description</dcterms:description>
+  <dcterms:contributors>The contributurs</dcterms:contributors>
+  <dcterms:creators>The creators</dcterms:creators>
+  <dcterms:effective_date>03/08/2011</dcterms:effective_date>
+  <dcterms:expiration_date>03/08/2011</dcterms:expiration_date>
+  <dcterms:type>Type</dcterms:type>
+  <dcterms:format></dcterms:format>
+  <dcterms:language>en</dcterms:language>
   <dcterms:accessRights>Access Rights</dcterms:accessRights>
+  <dcterms:rightsHolder>Rights Holder</dcterms:rightsHolder>
+  <dcterms:rights>Rights Holder</dcterms:rights>
+  <dcterms:abstract>The abstract</dcterms:abstract>
   <dcterms:alternative>Alternative Title</dcterms:alternative>
   <dcterms:available>Date Available</dcterms:available>
   <dcterms:bibliographicCitation>Bibliographic Citation</dcterms:bibliographicCitation>
   <dcterms:contributor>Contributor</dcterms:contributor>
-  <dcterms:description>Description</dcterms:description>
   <dcterms:hasPart>Has Part</dcterms:hasPart>
   <dcterms:hasVersion>Has Version</dcterms:hasVersion>
   <dcterms:identifier>Identifier</dcterms:identifier>
   <dcterms:isPartOf>Is Part Of</dcterms:isPartOf>
-  <dcterms:publisher>Publisher</dcterms:publisher>
   <dcterms:references>References</dcterms:references>
-  <dcterms:rightsHolder>Rights Holder</dcterms:rightsHolder>
   <dcterms:source>Source</dcterms:source>
   <dcterms:title>Title</dcterms:title>
-  <dcterms:type>Type</dcterms:type>
 </entry>

@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<entry xmlns="http://www.w3.org/2005/Atom">
+<entry xmlns="http://www.w3.org/2005/Atom"
+       xmlns:dcterms="http://purl.org/dc/terms/">
     <title>Atom-Powered Robots Run Amok</title>
     <id>Atom-Powered Robots Run Amok</id>
     <updated>2011/07/27 11:33:29.910811 GMT+2</updated>
@@ -10,4 +11,30 @@
     </author>
     <content>Some text.</content>
     <link rel="edit" href="http://nohost/plone/Members/test_user_1_/Atom-Powered%20Robots%20Run%20Amok/edit"/>
+    <dcterms:sub>The abstract</dcterms:sub>
+    <dcterms:subject>Subject 1</dcterms:subject>
+    <dcterms:publisher>Publisher</dcterms:publisher>
+    <dcterms:description>Description</dcterms:description>
+    <dcterms:contributors>The contributurs</dcterms:contributors>
+    <dcterms:creators>The creators</dcterms:creators>
+    <dcterms:effective_date>03/08/2011</dcterms:effective_date>
+    <dcterms:expiration_date>03/08/2011</dcterms:expiration_date>
+    <dcterms:type>Type</dcterms:type>
+    <dcterms:format></dcterms:format>
+    <dcterms:language>en</dcterms:language>
+    <dcterms:accessRights>Access Rights</dcterms:accessRights>
+    <dcterms:rightsHolder>Rights Holder</dcterms:rightsHolder>
+    <dcterms:rights>Rights Holder</dcterms:rights>
+    <dcterms:abstract>The abstract</dcterms:abstract>
+    <dcterms:alternative>Alternative Title</dcterms:alternative>
+    <dcterms:available>Date Available</dcterms:available>
+    <dcterms:bibliographicCitation>Bibliographic Citation</dcterms:bibliographicCitation>
+    <dcterms:contributor>Contributor</dcterms:contributor>
+    <dcterms:hasPart>Has Part</dcterms:hasPart>
+    <dcterms:hasVersion>Has Version</dcterms:hasVersion>
+    <dcterms:identifier>Identifier</dcterms:identifier>
+    <dcterms:isPartOf>Is Part Of</dcterms:isPartOf>
+    <dcterms:references>References</dcterms:references>
+    <dcterms:source>Source</dcterms:source>
+    <dcterms:title>Title</dcterms:title>
 </entry>

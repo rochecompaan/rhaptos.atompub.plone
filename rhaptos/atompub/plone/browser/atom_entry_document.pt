@@ -3,6 +3,7 @@
     xmlns="http://www.w3.org/2005/Atom"
     xmlns:tal="http://xml.zope.org/namespaces/tal"
     xmlns:metal="http://xml.zope.org/namespaces/metal"
+    xmlns:dcterms="http://purl.org/dc/terms/"
     tal:define="entry nocall:options/entry">
     <title tal:content="entry/Title">
         Atom-Powered Robots Run Amok
@@ -23,6 +24,9 @@
     </content>
     <link rel="edit"
         href="http://example.org/edit/first-post.atom"
-        tal:attributes="href python:'%s/edit' %entry.absolute_url()"
-    />
+        tal:attributes="href python:'%s/atompub/edit' %entry.absolute_url()"
+        />
+    <tal:metadata repeat="data python:view.metadata(entry)">
+    <span tal:replace="structure python:view.formatMetadata(data)">dcterm</span>
+    </tal:metadata>
 </entry>
