@@ -41,10 +41,11 @@ class AtomPubService(BrowserView):
     implements(IAtomPubService)
     
     # As specified by: http://bitworking.org/projects/atom/rfc5023.html#crwp
-    # the answwer to a successful POST one must return a:
+    # In answer to a successful POST one must return an:
     # Atom Entry Document
     atom_entry_document = ViewPageTemplateFile('atom_entry_document.pt')
-    atompub_media_result = ViewPageTemplateFile('atompub_media_result.pt')
+    media_entry_representation = \
+            ViewPageTemplateFile('media_entry_representation.pt')
 
 
     def __call__(self):
@@ -71,7 +72,7 @@ class AtomPubService(BrowserView):
             result = self.atom_entry_document(entry=obj)
             return result
         else:
-            result = self.atompub_media_result(entry=obj)
+            result = self.media_entry_representation(entry=obj)
             return result
 
         return 'Nothing to do'
