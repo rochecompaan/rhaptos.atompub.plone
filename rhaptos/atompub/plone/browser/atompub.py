@@ -17,11 +17,30 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.interfaces import IFolderish
 from Products.CMFCore.utils import getToolByName
 
+from Products.Archetypes.Marshall import formatRFC822Headers
+
 from rhaptos.atompub.plone.interfaces import IAtomPubServiceAdapter
 
-METADATA_MAPPING = {'slug': 'title',
-                    'name': 'creator',
+METADATA_MAPPING = {'name': 'creator',
                     'abstract': 'description',
+                    'dcterms:subject': 'subject',
+                    'dcterms:abstract': 'abstract',
+                    'dcterms:accessRights': 'accessRights',
+                    'dcterms:alternative': 'alternative',
+                    'dcterms:available': 'available',
+                    'dcterms:bibliographicCitation': 'bibliographicCitation',
+                    'dcterms:contributor': 'contributor',
+                    'dcterms:description': 'description',
+                    'dcterms:hasPart': 'hasPart',
+                    'dcterms:hasVersion': 'hasVersion',
+                    'dcterms:identifier': 'identifier',
+                    'dcterms:isPartOf': 'isPartOf',
+                    'dcterms:publisher': 'publisher',
+                    'dcterms:references': 'references',
+                    'dcterms:rightsHolder': 'rightsHolder',
+                    'dcterms:source': 'source',
+                    'dcterms:title': 'title',
+                    'dcterms:type': 'type',
                    }
 
 ATOMPUB_CONTENT_TYPE = 'application/atom+xml'
@@ -111,12 +130,9 @@ class PloneFolderAtomPubAdapter(object):
 
     
     def _updateRequest(self, request, content_type):
-        """ The body.seek(0) looks funny, but I do that to make sure whatever
-            tries to access the buffer after me can start from the beginning.
+        """ The body.seek(0) looks funny, but I do that to make sure I get
+            all the content, no matter who accessed the body file before me.
         """
-        # first we update the headers
-        request = self._changeHeaderNames(request, METADATA_MAPPING)
-        
         # then we update the body of the request
         if content_type == ATOMPUB_CONTENT_TYPE:
             body = request.get('BODYFILE')
@@ -124,29 +140,28 @@ class PloneFolderAtomPubAdapter(object):
             # make sure we read from the beginning
             body.seek(0)
             dom = parse(body)
-            request = self._addHeadersFromDOM(request, dom, METADATA_MAPPING)
-            body = self._getValueFromDOM('content', dom)
+            headers = self.getHeaders(dom, METADATA_MAPPING)
+
+            content = self._getValueFromDOM('content', dom)
             title = self._getValueFromDOM('title', dom)
             request['Title'] = title
-            body_file = StringIO(body.encode('utf-8'))
+
+            header = formatRFC822Headers(headers)
+            data = '%s\n\n%s' % (header, content.encode('utf-8'))
+            length = len(data)
+            request['Content-Length'] = length
+            body_file = StringIO(data)
             request['BODYFILE'] = body_file
         return request
    
 
-    def _changeHeaderNames(self, request, mappings):
-        for old_key, new_key in mappings.items():
-            value = request.get(old_key, None)
-            if value:
-                request.set(new_key, value)
-        return request
-
-
-    def _addHeadersFromDOM(self, request, dom, mappings):
-        for key in mappings.keys():
-            value = self._getValueFromDOM(key, dom)
-            if value is not None:
-                request.set(key, value)
-        return request
+    def getHeaders(self, dom, mappings): 
+        headers = []
+        for name in mappings.keys():
+            value = dom.getElementsByTagName(name)
+            value = '\n'.join([str(v.firstChild.nodeValue) for v in value])
+            headers.append((mappings[name], str(value)))
+        return headers
 
 
     def _getValueFromDOM(self, name, dom):
