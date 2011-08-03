@@ -199,7 +199,6 @@ class TestAtomPub(PloneTestCase.FunctionalTestCase):
         self.assertEqual(self._getValueFromDOM('language', result_dom),
                          self._getValueFromDOM('language', expected_dom))
 
-        import pdb;pdb.set_trace()
         self.assertEqual(self._getValueFromDOM('rights', result_dom),
                          self._getValueFromDOM('rights', expected_dom))
 
