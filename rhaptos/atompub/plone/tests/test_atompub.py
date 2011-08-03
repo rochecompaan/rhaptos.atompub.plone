@@ -172,6 +172,37 @@ class TestAtomPub(PloneTestCase.FunctionalTestCase):
         self.assertEqual(self._getValueFromDOM('title', result_dom),
                          self._getValueFromDOM('title', expected_dom))
 
+        self.assertEqual(self._getValueFromDOM('subject', result_dom),
+                         self._getValueFromDOM('subject', expected_dom))
+
+        self.assertEqual(self._getValueFromDOM('publisher', result_dom),
+                         self._getValueFromDOM('publisher', expected_dom))
+
+        self.assertEqual(self._getValueFromDOM('description', result_dom),
+                         self._getValueFromDOM('description', expected_dom))
+
+        self.assertEqual(self._getValueFromDOM('creators', result_dom),
+                         self._getValueFromDOM('creators', expected_dom))
+
+        self.assertEqual(self._getValueFromDOM('effective_date', result_dom),
+                         self._getValueFromDOM('effective_date', expected_dom))
+
+        self.assertEqual(self._getValueFromDOM('expiration_date', result_dom),
+                         self._getValueFromDOM('expiration_date', expected_dom))
+
+        self.assertEqual(self._getValueFromDOM('type', result_dom),
+                         self._getValueFromDOM('type', expected_dom))
+
+        self.assertEqual(self._getValueFromDOM('format', result_dom),
+                         self._getValueFromDOM('format', expected_dom))
+
+        self.assertEqual(self._getValueFromDOM('language', result_dom),
+                         self._getValueFromDOM('language', expected_dom))
+
+        import pdb;pdb.set_trace()
+        self.assertEqual(self._getValueFromDOM('rights', result_dom),
+                         self._getValueFromDOM('rights', expected_dom))
+
 
     def _getValueFromDOM(self, name, dom):
         value = None
