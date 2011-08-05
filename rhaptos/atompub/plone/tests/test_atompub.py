@@ -1,6 +1,20 @@
 #
 # Test the Atom Pub browser view
 #
+'''
+  1 %a   "src/rhaptos.atompub.plone/rhaptos/atompub/plone/browser/atompub.py" line 37
+  3  h   "src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/data/good_atom.xml" line 10
+  4  a   "src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/test_atompub.py" line 83
+  5  h   "src/rhaptos.swordservice.plone/rhaptos/swordservice/plone/browser/sword.py" line 155
+  6  h   "parts/omelette/Products/Archetypes/Marshall.py" line 2
+  7  h   "parts/omelette/Products/Archetypes/BaseObject.py" line 212
+  9  h   "src/rhaptos.atompub.plone/rhaptos/atompub/plone/browser/atom_entry_document.pt" line 30
+ 10  h   "parts/omelette/Products/CMFPlone/PloneTool.py" line 80
+ 11  h   "parts/omelette/Products/CMFDefault/Document.py" line 102
+ 12  h   "parts/omelette/Products/Archetypes/ExtensibleMetadata.py" line 181
+ 13  h   "parts/omelette/Products/CMFDefault/DublinCore.py" line 338
+ 14 #h   "src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/data/atom_post_expected_result.xml" line 5
+ '''
 
 import sys
 import os
@@ -207,7 +221,8 @@ class TestAtomPub(PloneTestCase.FunctionalTestCase):
         value = None
         elements = dom.getElementsByTagName(name)
         if elements:
-            value = elements[0].firstChild.nodeValue
+            child = elements[0].firstChild
+            value = child and child.nodeValue or None
         return value
 
 

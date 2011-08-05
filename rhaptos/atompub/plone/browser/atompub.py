@@ -1,3 +1,4 @@
+from copy import copy
 from cStringIO import StringIO
 
 from xml.dom.minidom import parse
@@ -10,6 +11,7 @@ from zope.publisher.interfaces.http import IHTTPRequest
 from zope.component import adapts, getMultiAdapter, queryUtility
 
 from webdav.NullResource import NullResource
+from plone.i18n.normalizer.interfaces import IIDNormalizer
 
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
@@ -23,31 +25,31 @@ from Products.Archetypes.Marshall import formatRFC822Headers
 
 from rhaptos.atompub.plone.interfaces import IAtomPubServiceAdapter
 
-METADATA_MAPPING = {'dcterms:title': 'Title',
-                    'dcterms:sub': 'Subject',
-                    'dcterms:subject': 'Subject',
-                    'dcterms:publisher': 'Publisher',
-                    'dcterms:description': 'Description',
-                    'dcterms:creators': 'Creators',
-                    'dcterms:effective_date': 'effective_date',
-                    'dcterms:expiration_date': 'expiration_date',
-                    'dcterms:type': 'Type',
-                    'dcterms:format': 'Format',
-                    'dcterms:language': 'Language',
-                    'dcterms:rights': 'Rights',
-                    'dcterms:accessRights': 'accessRights',
-                    'dcterms:rightsHolder': 'rightsHolder',
-                    'dcterms:abstract': 'abstract',
-                    'dcterms:alternative': 'alternative',
-                    'dcterms:available': 'available',
-                    'dcterms:bibliographicCitation': 'bibliographicCitation',
-                    'dcterms:contributor': 'Contributors',
-                    'dcterms:hasPart': 'hasPart',
-                    'dcterms:hasVersion': 'hasVersion',
-                    'dcterms:identifier': 'identifier',
-                    'dcterms:isPartOf': 'isPartOf',
-                    'dcterms:references': 'references',
-                    'dcterms:source': 'source',
+METADATA_MAPPING = {'title': 'Title',
+                    'sub': 'Subject',
+                    'subject': 'Subject',
+                    'publisher': 'Publisher',
+                    'description': 'Description',
+                    'creators': 'Creators',
+                    'effective_date': 'effective_date',
+                    'expiration_date': 'expiration_date',
+                    'type': 'Type',
+                    'format': 'Format',
+                    'language': 'Language',
+                    'rights': 'Rights',
+                    'accessRights': 'accessRights',
+                    'rightsHolder': 'rightsHolder',
+                    'abstract': 'abstract',
+                    'alternative': 'alternative',
+                    'available': 'available',
+                    'bibliographicCitation': 'bibliographicCitation',
+                    'contributor': 'Contributors',
+                    'hasPart': 'hasPart',
+                    'hasVersion': 'hasVersion',
+                    'identifier': 'identifier',
+                    'isPartOf': 'isPartOf',
+                    'references': 'references',
+                    'source': 'source',
                    }
 
 ATOMPUB_CONTENT_TYPE = 'application/atom+xml'
@@ -81,6 +83,7 @@ class AtomPubService(BrowserView):
                                   IAtomPubServiceAdapter
                                  )
         obj = adapter()
+
         # TODO: some error messaging is in order here.
         # look at the rhaptos.swordservice.plone.sword.py decorator:
         # @show_error_document, maybe use that to decorate our __call__
@@ -121,28 +124,38 @@ class PloneFolderAtomPubAdapter(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        self.response = request.response
 
 
     def __call__(self):
-        context = self.context
-        request = self.request
-        response = request.response
+        content_type = self.request.getHeader('content-type').strip(';')
+        disposition = self.request.getHeader('content-disposition')
+        filename = None
+        if disposition is not None:
+            try:
+                filename = [x for x in disposition.split(';') \
+                    if x.strip().startswith('filename=')][0][10:]
+            except IndexError:
+                pass
 
-        content_type = request.getHeader('content-type').strip(';')
-        prefix = self._getPrefix(content_type)
-        name = context.generateUniqueId(prefix)
+        # If no filename, make one up, otherwise just make sure its http safe
+        if filename is None:
+            safe_filename = self.context.generateUniqueId(
+                    type_name=self._getPrefix(content_type))
+        else:
+            safe_filename = queryUtility(IIDNormalizer).normalize(filename)
 
         # fix the request headers to get the correct metadata mappings
-        request = self._updateRequest(request, content_type)
+        request = self._updateRequest(self.request, content_type)
 
-        nullresouce = NullResource(context, name, request)
-        nullresouce.__of__(context)
-        nullresouce.PUT(request, response)
+        nullresouce = NullResource(self.context, safe_filename, request)
+        nullresouce.__of__(self.context)
+        nullresouce.PUT(request, self.response)
 
         # Look it up and finish up, then return it.
-        obj = context._getOb(name)
-        obj.PUT(request, response)
-        obj.setTitle(request.get('Title', name))
+        obj = self.context._getOb(safe_filename)
+        obj.PUT(request, self.response)
+        obj.setTitle(request.get('Title', safe_filename))
         obj.reindexObject(idxs='Title')
         return obj
 
@@ -158,12 +171,13 @@ class PloneFolderAtomPubAdapter(object):
             # make sure we read from the beginning
             body.seek(0)
             dom = parse(body)
-            headers = self.getHeaders(dom, METADATA_MAPPING)
 
-            content = self._getValueFromDOM('content', dom)
-            title = self._getValueFromDOM('title', dom)
+            content = self.getValueFromDOM('content', dom)
+            title = self.getValueFromDOM('title', dom)
             request['Title'] = title
-
+            headers = self.getHeaders(
+                    dom, self.getMetadataMapping(METADATA_MAPPING, dom)
+                    )
             header = formatRFC822Headers(headers)
             data = '%s\n\n%s' % (header, content.encode('utf-8'))
             length = len(data)
@@ -171,7 +185,24 @@ class PloneFolderAtomPubAdapter(object):
             body_file = StringIO(data)
             request['BODYFILE'] = body_file
         return request
+
    
+    def getMetadataMapping(self, base_mapping, dom):
+        attrs = dom.documentElement.attributes.keys()
+        name_space_prefixes = []
+        for attr in attrs:
+            split_attr = attr.split(':')
+            if len(split_attr) > 1:
+                extension = split_attr[1]
+                name_space_prefixes.append(extension)
+        
+        mappings = {}
+        for prefix in name_space_prefixes:
+            tmp_dict = copy(base_mapping)
+            for key, value in tmp_dict.items():
+                mappings['%s:%s' %(prefix, key)] = value
+        return mappings 
+
 
     def getHeaders(self, dom, mappings): 
         headers = []
@@ -184,22 +215,16 @@ class PloneFolderAtomPubAdapter(object):
         return headers
 
 
-    def _getValueFromDOM(self, name, dom):
+    def getValueFromDOM(self, name, dom):
         value = None
         elements = dom.getElementsByTagName(name)
         if elements:
-            value = elements[0].firstChild.nodeValue
+            value = elements and elements[0].firstChild.nodeValue or None
         return value
 
 
-    def _getHtmlBodyFromDOM(self, dom):
-        return self._getValueFromDOM('content', dom)
-
-    
     def _getPrefix(self, seed):
         tmp_name = seed.replace('/', '_')
         tmp_name = tmp_name.replace('+', '_')
         tmp_name = tmp_name.strip(';')
         return tmp_name
-
-
