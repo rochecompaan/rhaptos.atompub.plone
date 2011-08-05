@@ -149,7 +149,7 @@ class PloneFolderAtomPubAdapter(object):
         request = self._updateRequest(self.request, content_type)
 
         nullresource = NullResource(self.context, safe_filename, request)
-        nullresource.__of__(self.context)
+        nullresource = nullresource.__of__(self.context)
         nullresource.PUT(request, self.response)
 
         # Look it up and finish up, then return it.
