@@ -148,9 +148,9 @@ class PloneFolderAtomPubAdapter(object):
         # fix the request headers to get the correct metadata mappings
         request = self._updateRequest(self.request, content_type)
 
-        nullresouce = NullResource(self.context, safe_filename, request)
-        nullresouce.__of__(self.context)
-        nullresouce.PUT(request, self.response)
+        nullresource = NullResource(self.context, safe_filename, request)
+        nullresource.__of__(self.context)
+        nullresource.PUT(request, self.response)
 
         # Look it up and finish up, then return it.
         obj = self.context._getOb(safe_filename)
