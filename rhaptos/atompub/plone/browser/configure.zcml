@@ -3,12 +3,6 @@
     xmlns:browser="http://namespaces.zope.org/browser"
     i18n_domain="rhaptos.atompub.plone">
 
-    <interface
-        interface=".interfaces.IThemeSpecific"
-        type="zope.publisher.interfaces.browser.IBrowserSkinType"
-        name="Rhaptos AtomPub Plone Theme"
-        />
-
     <browser:page
         for="*"
         name="atompub"
