@@ -11,15 +11,12 @@ from zope.publisher.interfaces.http import IHTTPRequest
 from zope.component import adapts, getMultiAdapter, queryUtility
 
 from webdav.NullResource import NullResource
-from plone.i18n.normalizer.interfaces import IIDNormalizer
 
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.interfaces import IFolderish
 from Products.CMFCore.utils import getToolByName
-
-from Products.CMFPlone.PloneTool import METADATA_DCNAME, METADATA_DC_AUTHORFIELDS
 
 from Products.Archetypes.Marshall import formatRFC822Headers
 
@@ -143,7 +140,7 @@ class PloneFolderAtomPubAdapter(object):
             safe_filename = self.context.generateUniqueId(
                     type_name=self._getPrefix(content_type))
         else:
-            safe_filename = queryUtility(IIDNormalizer).normalize(filename)
+            safe_filename = getToolByName('plone_utils').normalizeString(filename)
 
         # fix the request headers to get the correct metadata mappings
         request = self._updateRequest(self.request, content_type)
