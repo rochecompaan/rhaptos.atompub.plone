@@ -51,6 +51,11 @@ METADATA_MAPPING = {'title': 'Title',
 
 ATOMPUB_CONTENT_TYPE = 'application/atom+xml'
 
+def getHeader(request, name, default=None):
+    """ Work around the change from get_header to getHeader in a way that will
+        survive deprecation of the former. """
+    return getattr(request, 'getHeader', request.get_header)(
+        name, default)
 
 class IAtomPubService(Interface):
     """ Marker interface for AtomPuv service """
@@ -93,7 +98,7 @@ class AtomPubService(BrowserView):
         response.setStatus(201)
 
         # return the correct result based on the content type
-        content_type = self.request.getHeader('content-type').strip(';')
+        content_type = getHeader(self.request, 'content-type').strip(';')
         if content_type == ATOMPUB_CONTENT_TYPE:
             result = self.atom_entry_document(entry=obj)
             return result
@@ -125,8 +130,8 @@ class PloneFolderAtomPubAdapter(object):
 
 
     def __call__(self):
-        content_type = self.request.getHeader('content-type').strip(';')
-        disposition = self.request.getHeader('content-disposition')
+        content_type = getHeader(self.request, 'content-type').strip(';')
+        disposition = getHeader(self.request, 'content-disposition')
         filename = None
         if disposition is not None:
             try:
@@ -140,7 +145,8 @@ class PloneFolderAtomPubAdapter(object):
             safe_filename = self.context.generateUniqueId(
                     type_name=self._getPrefix(content_type))
         else:
-            safe_filename = getToolByName('plone_utils').normalizeString(filename)
+            safe_filename = getToolByName(self.context,
+                'plone_utils').normalizeString(filename)
 
         # fix the request headers to get the correct metadata mappings
         request = self._updateRequest(self.request, content_type)
