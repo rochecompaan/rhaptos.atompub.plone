@@ -145,21 +145,29 @@ class PloneFolderAtomPubAdapter(object):
         plone_utils = getToolByName(self.context, 'plone_utils')
         if filename is None:
             safe_name = plone_utils.normalizeString(content_type)
-            safe_filename = self.context.generateUniqueId(type_name=safe_name)
+            filename = self.context.generateUniqueId(type_name=safe_name)
         else:
-            plone_utils.normalizeString(filename)
+            filename = plone_utils.normalizeString(filename)
 
-        # fix the request headers to get the correct metadata mappings
-        request = self._updateRequest(self.request, content_type)
+        obj = self.getObject(self.context, filename, self.request)
+        obj = self.updateObject(obj, filename, content_type)
+        return obj
 
-        nullresource = NullResource(self.context, safe_filename, request)
+
+    def getObject(self, context, filename, request):
+        nullresource = NullResource(self.context, filename, request)
         nullresource = nullresource.__of__(self.context)
         nullresource.PUT(request, self.response)
-
         # Look it up and finish up, then return it.
-        obj = self.context._getOb(safe_filename)
+        obj = self.context._getOb(filename)
+        return obj
+
+
+    def updateObject(self, obj, filename, content_type):
+        # fix the request headers to get the correct metadata mappings
+        request = self._updateRequest(self.request, content_type)
         obj.PUT(request, self.response)
-        obj.setTitle(request.get('Title', safe_filename))
+        obj.setTitle(request.get('Title', filename))
         obj.reindexObject(idxs='Title')
         return obj
 
