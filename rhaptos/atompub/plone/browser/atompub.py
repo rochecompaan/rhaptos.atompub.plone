@@ -1,10 +1,11 @@
 from copy import copy
 from cStringIO import StringIO
 
+from ZServer import LARGE_FILE_THRESHOLD
 from xml.dom.minidom import parse
 from xml.parsers.expat import ExpatError
 
-from Acquisition import aq_inner
+from Acquisition import aq_inner, aq_base
 
 from zope.interface import Interface, implements
 from zope.publisher.interfaces.http import IHTTPRequest
@@ -22,35 +23,9 @@ from Products.Archetypes.Marshall import formatRFC822Headers
 
 from rhaptos.atompub.plone.interfaces import IAtomPubServiceAdapter
 
-METADATA_MAPPING = {'title': 'Title',
-                    'sub': 'Subject',
-                    'subject': 'Subject',
-                    'publisher': 'Publisher',
-                    'description': 'Description',
-                    'creators': 'Creators',
-                    'effective_date': 'effective_date',
-                    'expiration_date': 'expiration_date',
-                    'type': 'Type',
-                    'format': 'Format',
-                    'language': 'Language',
-                    'rights': 'Rights',
-                    'accessRights': 'accessRights',
-                    'rightsHolder': 'rightsHolder',
-                    'abstract': 'abstract',
-                    'alternative': 'alternative',
-                    'available': 'available',
-                    'bibliographicCitation': 'bibliographicCitation',
-                    'contributor': 'Contributors',
-                    'hasPart': 'hasPart',
-                    'hasVersion': 'hasVersion',
-                    'identifier': 'identifier',
-                    'isPartOf': 'isPartOf',
-                    'references': 'references',
-                    'source': 'source',
-                    'googleAnalyticsTrackingCode': 'GoogleAnalyticsTrackingCode',
-                   }
-
-ATOMPUB_CONTENT_TYPE = 'application/atom+xml'
+ATOMPUB_CONTENT_TYPES = ['application/atom+xml',
+                         'application/atom+xml;type=entry',
+                        ]
 
 def getHeader(request, name, default=None):
     """ Work around the change from get_header to getHeader in a way that will
@@ -100,7 +75,7 @@ class AtomPubService(BrowserView):
 
         # return the correct result based on the content type
         content_type = getHeader(self.request, 'content-type').strip(';')
-        if content_type == ATOMPUB_CONTENT_TYPE:
+        if content_type in ATOMPUB_CONTENT_TYPES:
             result = self.atom_entry_document(entry=obj)
             return result
         else:
@@ -122,12 +97,42 @@ class AtomPubService(BrowserView):
     
 
 class PloneFolderAtomPubAdapter(object):
+    METADATA_MAPPING = {'title': 'title',
+                        'sub': 'subject',
+                        'subject': 'subject',
+                        'publisher': 'publisher',
+                        'description': 'description',
+                        'creators': 'creators',
+                        'effective_date': 'effective_date',
+                        'expiration_date': 'expiration_date',
+                        'type': 'Type',
+                        'format': 'format',
+                        'language': 'language',
+                        'rights': 'rights',
+                        'accessRights': 'accessRights',
+                        'rightsHolder': 'rightsHolder',
+                        'abstract': 'abstract',
+                        'alternative': 'alternative',
+                        'available': 'available',
+                        'bibliographicCitation': 'bibliographicCitation',
+                        'contributor': 'contributors',
+                        'hasPart': 'hasPart',
+                        'hasVersion': 'hasVersion',
+                        'identifier': 'identifier',
+                        'isPartOf': 'isPartOf',
+                        'references': 'references',
+                        'source': 'source',
+                        'googleAnalyticsTrackingCode': 'GoogleAnalyticsTrackingCode',
+                       }
+
+
     adapts(IFolderish, IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context
         self.request = request
         self.response = request.response
+        self.ATOMPUB_CONTENT_TYPES = ATOMPUB_CONTENT_TYPES
 
 
     def __call__(self):
@@ -149,24 +154,31 @@ class PloneFolderAtomPubAdapter(object):
         else:
             filename = plone_utils.normalizeString(filename)
 
-        obj = self.getObject(self.context, filename, self.request)
-        obj = self.updateObject(obj, filename, content_type)
+        obj = self.createObject(self.context, filename, content_type, self.request)
+        obj = self.updateObject(
+                obj, filename, self.request, self.response, content_type)
+        return obj
+   
+
+    def createObject(self, context, name, content_type, request):
+        if int(request.get('CONTENT_LENGTH', 0)) > LARGE_FILE_THRESHOLD:
+            file = request['BODYFILE']
+            body = file.read(LARGE_FILE_THRESHOLD)
+            file.seek(0)
+        else:
+            body = request.get('BODY', '')
+
+        registry = getToolByName(context, 'content_type_registry')
+        typeObjectName = registry.findTypeName(name, content_type, body)
+        context.invokeFactory(typeObjectName, name)
+        obj = aq_base(context._getOb(name))
         return obj
 
 
-    def getObject(self, context, filename, request):
-        nullresource = NullResource(self.context, filename, request)
-        nullresource = nullresource.__of__(self.context)
-        nullresource.PUT(request, self.response)
-        # Look it up and finish up, then return it.
-        obj = self.context._getOb(filename)
-        return obj
-
-
-    def updateObject(self, obj, filename, content_type):
+    def updateObject(self, obj, filename, request, response, content_type):
         # fix the request headers to get the correct metadata mappings
-        request = self._updateRequest(self.request, content_type)
-        obj.PUT(request, self.response)
+        request = self._updateRequest(request, content_type)
+        obj.PUT(request, response)
         obj.setTitle(request.get('Title', filename))
         obj.reindexObject(idxs='Title')
         return obj
@@ -177,7 +189,7 @@ class PloneFolderAtomPubAdapter(object):
             all the content, no matter who accessed the body file before me.
         """
         # then we update the body of the request
-        if content_type == ATOMPUB_CONTENT_TYPE:
+        if content_type in ATOMPUB_CONTENT_TYPES:
             body = request.get('BODYFILE')
             # update headers from the request body
             # make sure we read from the beginning
@@ -187,7 +199,7 @@ class PloneFolderAtomPubAdapter(object):
             title = self.getValueFromDOM('title', dom)
             request['Title'] = title
             headers = self.getHeaders(
-                    dom, self.getMetadataMapping(METADATA_MAPPING, dom)
+                    dom, self.getMetadataMapping(self.METADATA_MAPPING, dom)
                     )
             header = formatRFC822Headers(headers)
             content = self.getValueFromDOM('content', dom)
