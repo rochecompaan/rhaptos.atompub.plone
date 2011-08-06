@@ -47,6 +47,7 @@ METADATA_MAPPING = {'title': 'Title',
                     'isPartOf': 'isPartOf',
                     'references': 'references',
                     'source': 'source',
+                    'googleAnalyticsTrackingCode': 'GoogleAnalyticsTrackingCode',
                    }
 
 ATOMPUB_CONTENT_TYPE = 'application/atom+xml'
