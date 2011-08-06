@@ -10,4 +10,14 @@ include/
 lib/
 parts/
 var/
-rhaptos.atompub.plone.egg-info/
+buildout-cache/downloads/dist/*.tgz
+buildout-cache/downloads/dist/*.bzip
+buildout-cache/downloads/dist/*.zip
+buildout-cache/eggs/*.egg
+.mr.developer.cfg
+PKG-INFO
+SOURCES.txt
+requires.txt
+Paste-1.7.5.1-py2.4.egg/
+PasteDeploy-1.5.0-py2.4.egg/
+PasteScript-1.7.3-py2.4.egg/
