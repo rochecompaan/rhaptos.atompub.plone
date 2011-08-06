@@ -141,12 +141,12 @@ class PloneFolderAtomPubAdapter(object):
                 pass
 
         # If no filename, make one up, otherwise just make sure its http safe
+        plone_utils = getToolByName(self.context, 'plone_utils')
         if filename is None:
-            safe_filename = self.context.generateUniqueId(
-                    type_name=self._getPrefix(content_type))
+            safe_name = plone_utils.normalizeString(content_type)
+            safe_filename = self.context.generateUniqueId(type_name=safe_name)
         else:
-            safe_filename = getToolByName(self.context,
-                'plone_utils').normalizeString(filename)
+            plone_utils.normalizeString(filename)
 
         # fix the request headers to get the correct metadata mappings
         request = self._updateRequest(self.request, content_type)
@@ -175,13 +175,15 @@ class PloneFolderAtomPubAdapter(object):
             body.seek(0)
             dom = parse(body)
 
-            content = self.getValueFromDOM('content', dom)
             title = self.getValueFromDOM('title', dom)
             request['Title'] = title
             headers = self.getHeaders(
                     dom, self.getMetadataMapping(METADATA_MAPPING, dom)
                     )
             header = formatRFC822Headers(headers)
+            content = self.getValueFromDOM('content', dom)
+            # make sure content is not None
+            content = content and content or ''
             data = '%s\n\n%s' % (header, content.encode('utf-8'))
             length = len(data)
             request['Content-Length'] = length
@@ -224,10 +226,3 @@ class PloneFolderAtomPubAdapter(object):
         if elements:
             value = elements and elements[0].firstChild.nodeValue or None
         return value
-
-
-    def _getPrefix(self, seed):
-        tmp_name = seed.replace('/', '_')
-        tmp_name = tmp_name.replace('+', '_')
-        tmp_name = tmp_name.strip(';')
-        return tmp_name
