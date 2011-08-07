@@ -34,5 +34,25 @@
   <dcterms:references>References</dcterms:references>
   <dcterms:source>Source</dcterms:source>
   <dcterms:title>Title</dcterms:title>
+  <dcterms:license>http://creativecommons.org/licenses/by/1.0</dcterms:license>
   <cnxml:googleAnalyticsTrackingCode>UA-xxxxxxx-x</cnxml:googleAnalyticsTrackingCode>
+  <md:actors>
+    <md:person userid="admin">
+      <md:firstname></md:firstname>
+      <md:surname></md:surname>
+      <md:fullname></md:fullname>
+      <md:email></md:email>
+    </md:person>
+    <md:person userid="rijk">
+      <md:firstname>Rijk</md:firstname>
+      <md:surname>Stofberg</md:surname>
+      <md:fullname>Rijk Stofberg</md:fullname>
+      <md:email>rijk.stofberg@gmail.com</md:email>
+    </md:person>
+  </md:actors>
+  <md:roles>
+    <md:role type="author">admin rijk</md:role>
+    <md:role type="maintainer">admin rijk</md:role>
+    <md:role type="licensor">admin rijk</md:role>
+  </md:roles>
 </entry>

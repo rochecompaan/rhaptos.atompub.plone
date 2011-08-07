@@ -97,36 +97,41 @@ class AtomPubService(BrowserView):
     
 
 class PloneFolderAtomPubAdapter(object):
-    METADATA_MAPPING = {'title': 'title',
-                        'sub': 'subject',
-                        'subject': 'subject',
-                        'publisher': 'publisher',
-                        'description': 'description',
-                        'creators': 'creators',
-                        'effective_date': 'effective_date',
-                        'expiration_date': 'expiration_date',
-                        'type': 'Type',
-                        'format': 'format',
-                        'language': 'language',
-                        'rights': 'rights',
-                        'accessRights': 'accessRights',
-                        'rightsHolder': 'rightsHolder',
-                        'abstract': 'abstract',
-                        'alternative': 'alternative',
-                        'available': 'available',
-                        'bibliographicCitation': 'bibliographicCitation',
-                        'contributor': 'contributors',
-                        'hasPart': 'hasPart',
-                        'hasVersion': 'hasVersion',
-                        'identifier': 'identifier',
-                        'isPartOf': 'isPartOf',
-                        'references': 'references',
-                        'source': 'source',
-                        'googleAnalyticsTrackingCode': 'GoogleAnalyticsTrackingCode',
-                       }
-
-
     adapts(IFolderish, IHTTPRequest)
+
+    METADATA_MAPPING =\
+            {'title': 'title',
+             'updated': 'modified',
+             'author': 'creator',
+             'sub': 'subject',
+             'subject': 'subject',
+             'publisher': 'publisher',
+             'description': 'description',
+             'creators': 'creators',
+             'effective_date': 'effective_date',
+             'expiration_date': 'expiration_date',
+             'type': 'Type',
+             'format': 'format',
+             'language': 'language',
+             'rights': 'rights',
+             'accessRights': 'accessRights',
+             'rightsHolder': 'rightsHolder',
+             'abstract': 'abstract',
+             'alternative': 'alternative',
+             'available': 'available',
+             'bibliographicCitation': 'bibliographicCitation',
+             'contributor': 'contributors',
+             'hasPart': 'hasPart',
+             'hasVersion': 'hasVersion',
+             'identifier': 'identifier',
+             'isPartOf': 'isPartOf',
+             'references': 'references',
+             'source': 'source',
+             'googleAnalyticsTrackingCode': 'GoogleAnalyticsTrackingCode',
+             'license': 'license',
+             'keywords': 'keywords',
+             }
+
 
     def __init__(self, context, request):
         self.context = context
@@ -198,9 +203,7 @@ class PloneFolderAtomPubAdapter(object):
 
             title = self.getValueFromDOM('title', dom)
             request['Title'] = title
-            headers = self.getHeaders(
-                    dom, self.getMetadataMapping(self.METADATA_MAPPING, dom)
-                    )
+            headers = self.getHeaders(dom, self.METADATA_MAPPING)
             header = formatRFC822Headers(headers)
             content = self.getValueFromDOM('content', dom)
             # make sure content is not None
@@ -213,31 +216,15 @@ class PloneFolderAtomPubAdapter(object):
         return request
 
    
-    def getMetadataMapping(self, base_mapping, dom):
-        attrs = dom.documentElement.attributes.keys()
-        name_space_prefixes = []
-        for attr in attrs:
-            split_attr = attr.split(':')
-            if len(split_attr) > 1:
-                extension = split_attr[1]
-                name_space_prefixes.append(extension)
-        
-        mappings = {}
-        for prefix in name_space_prefixes:
-            tmp_dict = copy(base_mapping)
-            for key, value in tmp_dict.items():
-                mappings['%s:%s' %(prefix, key)] = value
-        return mappings 
-
-
     def getHeaders(self, dom, mappings): 
         headers = []
-        for name in mappings.keys():
-            value = dom.getElementsByTagName(name)
-            value = '\n'.join([str(v.firstChild.nodeValue) for v in value \
-                               if v.firstChild is not None]
-                             )
-            headers.append((mappings[name], str(value)))
+        for prefix, uri in dom.documentElement.attributes.items():
+            for name in mappings.keys():
+                value = dom.getElementsByTagNameNS(uri, name)
+                value = '\n'.join([str(v.firstChild.nodeValue) for v in value \
+                                   if v.firstChild is not None]
+                                 )
+                headers.append((mappings[name], str(value)))
         return headers
 
 
