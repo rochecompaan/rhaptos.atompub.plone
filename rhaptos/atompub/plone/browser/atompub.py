@@ -23,6 +23,40 @@ from Products.Archetypes.Marshall import formatRFC822Headers
 
 from rhaptos.atompub.plone.interfaces import IAtomPubServiceAdapter
 
+
+METADATA_MAPPING =\
+        {'title': 'title',
+         'updated': 'modified',
+         'author': 'creator',
+         'sub': 'subject',
+         'subject': 'subject',
+         'publisher': 'publisher',
+         'description': 'description',
+         'creators': 'creators',
+         'effective_date': 'effective_date',
+         'expiration_date': 'expiration_date',
+         'type': 'Type',
+         'format': 'format',
+         'language': 'language',
+         'rights': 'rights',
+         'accessRights': 'accessRights',
+         'rightsHolder': 'rightsHolder',
+         'abstract': 'abstract',
+         'alternative': 'alternative',
+         'available': 'available',
+         'bibliographicCitation': 'bibliographicCitation',
+         'contributor': 'contributors',
+         'hasPart': 'hasPart',
+         'hasVersion': 'hasVersion',
+         'identifier': 'identifier',
+         'isPartOf': 'isPartOf',
+         'references': 'references',
+         'source': 'source',
+         'googleAnalyticsTrackingCode': 'GoogleAnalyticsTrackingCode',
+         'license': 'license',
+         'keywords': 'keywords',
+         }
+
 ATOMPUB_CONTENT_TYPES = ['application/atom+xml',
                          'application/atom+xml;type=entry',
                         ]
@@ -99,39 +133,6 @@ class AtomPubService(BrowserView):
 class PloneFolderAtomPubAdapter(object):
     adapts(IFolderish, IHTTPRequest)
 
-    METADATA_MAPPING =\
-            {'title': 'title',
-             'updated': 'modified',
-             'author': 'creator',
-             'sub': 'subject',
-             'subject': 'subject',
-             'publisher': 'publisher',
-             'description': 'description',
-             'creators': 'creators',
-             'effective_date': 'effective_date',
-             'expiration_date': 'expiration_date',
-             'type': 'Type',
-             'format': 'format',
-             'language': 'language',
-             'rights': 'rights',
-             'accessRights': 'accessRights',
-             'rightsHolder': 'rightsHolder',
-             'abstract': 'abstract',
-             'alternative': 'alternative',
-             'available': 'available',
-             'bibliographicCitation': 'bibliographicCitation',
-             'contributor': 'contributors',
-             'hasPart': 'hasPart',
-             'hasVersion': 'hasVersion',
-             'identifier': 'identifier',
-             'isPartOf': 'isPartOf',
-             'references': 'references',
-             'source': 'source',
-             'googleAnalyticsTrackingCode': 'GoogleAnalyticsTrackingCode',
-             'license': 'license',
-             'keywords': 'keywords',
-             }
-
 
     def __init__(self, context, request):
         self.context = context
@@ -203,7 +204,7 @@ class PloneFolderAtomPubAdapter(object):
 
             title = self.getValueFromDOM('title', dom)
             request['Title'] = title
-            headers = self.getHeaders(dom, self.METADATA_MAPPING)
+            headers = self.getHeaders(dom, METADATA_MAPPING)
             header = formatRFC822Headers(headers)
             content = self.getValueFromDOM('content', dom)
             # make sure content is not None
@@ -221,10 +222,10 @@ class PloneFolderAtomPubAdapter(object):
         for prefix, uri in dom.documentElement.attributes.items():
             for name in mappings.keys():
                 value = dom.getElementsByTagNameNS(uri, name)
-                value = '\n'.join([str(v.firstChild.nodeValue) for v in value \
+                value = '\n'.join([str(v.firstChild.nodeValue).strip() for v in value \
                                    if v.firstChild is not None]
                                  )
-                headers.append((mappings[name], str(value)))
+                if value: headers.append((mappings[name], str(value)))
         return headers
 
 
