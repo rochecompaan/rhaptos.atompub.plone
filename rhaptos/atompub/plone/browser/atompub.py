@@ -141,6 +141,20 @@ class PloneFolderAtomPubAdapter(object):
         self.ATOMPUB_CONTENT_TYPES = ATOMPUB_CONTENT_TYPES
 
 
+    def generateFilename(self, name):
+        """ The filename as per the Content-Disposition header is passed
+            as the name parameter. This method needs to return a save
+            name that can be used as the id of the object. """
+        # If no name, generate one, otherwise just make sure its safe
+        plone_utils = getToolByName(self.context, 'plone_utils')
+        if name is None:
+            content_type = getHeader(self.request, 'content-type').strip(';')
+            safe_name = plone_utils.normalizeString(content_type)
+            return self.context.generateUniqueId(type_name=safe_name)
+        else:
+            return plone_utils.normalizeString(name)
+
+
     def __call__(self):
         content_type = getHeader(self.request, 'content-type').strip(';')
         disposition = getHeader(self.request, 'content-disposition')
@@ -152,14 +166,7 @@ class PloneFolderAtomPubAdapter(object):
             except IndexError:
                 pass
 
-        # If no filename, make one up, otherwise just make sure its http safe
-        plone_utils = getToolByName(self.context, 'plone_utils')
-        if filename is None:
-            safe_name = plone_utils.normalizeString(content_type)
-            filename = self.context.generateUniqueId(type_name=safe_name)
-        else:
-            filename = plone_utils.normalizeString(filename)
-
+        filename = self.generateFilename(filename)
         obj = self.createObject(self.context, filename, content_type, self.request)
         obj = self.updateObject(
                 obj, filename, self.request, self.response, content_type)
