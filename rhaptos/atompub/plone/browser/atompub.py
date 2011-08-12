@@ -170,23 +170,20 @@ class PloneFolderAtomPubAdapter(object):
                 pass
 
         filename = self.generateFilename(filename)
-        obj = self.createObject(
-            self.context, filename, content_type, self.getBody(self.request))
+        obj = self.createObject(self.context, filename, content_type, self.request)
         obj = self.updateObject(
                 obj, filename, self.request, self.response, content_type)
         return obj
    
 
-    def getBody(self, request):
+    def createObject(self, context, name, content_type, request):
         if int(request.get('CONTENT_LENGTH', 0)) > LARGE_FILE_THRESHOLD:
             file = request['BODYFILE']
             body = file.read(LARGE_FILE_THRESHOLD)
             file.seek(0)
-            return body
-        return request.get('BODY', '')
+        else:
+            body = request.get('BODY', '')
 
-
-    def createObject(self, context, name, content_type, body):
         registry = getToolByName(context, 'content_type_registry')
         typeObjectName = registry.findTypeName(name, content_type, body)
         context.invokeFactory(typeObjectName, name)
