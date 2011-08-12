@@ -158,8 +158,11 @@ class PloneFolderAtomPubAdapter(object):
     def __call__(self):
         content_type = getHeader(self.request, 'content-type').strip(';')
         disposition = getHeader(self.request, 'content-disposition')
+        slug = getHeader(self.request, 'slug')
         filename = None
-        if disposition is not None:
+        if slug is not None:
+            filename = slug
+        elif disposition is not None:
             try:
                 filename = [x for x in disposition.split(';') \
                     if x.strip().startswith('filename=')][0][10:]
