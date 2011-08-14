@@ -193,37 +193,37 @@ class PloneFolderAtomPubAdapter(object):
 
     def updateObject(self, obj, filename, request, response, content_type):
         # fix the request headers to get the correct metadata mappings
-        request = self._updateRequest(request, content_type)
+        if content_type in ATOMPUB_CONTENT_TYPES:
+            request = self._updateRequest(request)
         obj.PUT(request, response)
         obj.setTitle(request.get('Title', filename))
         obj.reindexObject(idxs='Title')
         return obj
 
     
-    def _updateRequest(self, request, content_type):
+    def _updateRequest(self, request):
         """ The body.seek(0) looks funny, but I do that to make sure I get
             all the content, no matter who accessed the body file before me.
         """
         # then we update the body of the request
-        if content_type in ATOMPUB_CONTENT_TYPES:
-            body = request.get('BODYFILE')
-            # update headers from the request body
-            # make sure we read from the beginning
-            body.seek(0)
-            dom = parse(body)
+        body = request.get('BODYFILE')
+        # update headers from the request body
+        # make sure we read from the beginning
+        body.seek(0)
+        dom = parse(body)
 
-            title = self.getValueFromDOM('title', dom)
-            request['Title'] = title
-            headers = self.getHeaders(dom, METADATA_MAPPING)
-            header = formatRFC822Headers(headers)
-            content = self.getValueFromDOM('content', dom)
-            # make sure content is not None
-            content = content and content or ''
-            data = '%s\n\n%s' % (header, content.encode('utf-8'))
-            length = len(data)
-            request['Content-Length'] = length
-            body_file = StringIO(data)
-            request['BODYFILE'] = body_file
+        title = self.getValueFromDOM('title', dom)
+        request['Title'] = title
+        headers = self.getHeaders(dom, METADATA_MAPPING)
+        header = formatRFC822Headers(headers)
+        content = self.getValueFromDOM('content', dom)
+        # make sure content is not None
+        content = content and content or ''
+        data = '%s\n\n%s' % (header, content.encode('utf-8'))
+        length = len(data)
+        request['Content-Length'] = length
+        body_file = StringIO(data)
+        request['BODYFILE'] = body_file
         return request
 
    
