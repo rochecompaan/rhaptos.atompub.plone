@@ -70,6 +70,10 @@ def getHeader(request, name, default=None):
 class IAtomPubService(Interface):
     """ Marker interface for AtomPuv service """
 
+class IAtomFeed(Interface):
+    """ Marker interface for AtomPub statement """
+
+
 class AtomPubService(BrowserView):
     """ Accept a POST, use the content type registry to figure out what type
         to create.
@@ -245,3 +249,12 @@ class PloneFolderAtomPubAdapter(object):
         if elements:
             value = elements and elements[0].firstChild.nodeValue or None
         return value
+
+
+class AtomFeed(BrowserView):
+    """
+    """
+    implements(IAtomFeed)
+
+    def __call__(self):
+        return self.index()

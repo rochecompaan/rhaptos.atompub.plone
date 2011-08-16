@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+    xmlns:tal="http://xml.zope.org/namespaces/tal"
+    xmlns:metal="http://xml.zope.org/namespaces/metal">
+
+    <!-- feed spoof comment - move above feed to get browser to show xml  -->
+
+    <title type="text" tal:content="context/Title">
+        Document title
+    </title>
+    <author tal:content="context/Creator">rhaptos</author>
+    <id tal:content="context/getId">Unique id</id>
+    <license tal:content="context/getLicense|nothing">
+        http://creativecommons.org/licenses/by/3.0/
+    </license>
+
+    <entry>
+      <link rel="edit-media"
+            href="http://cnx.org/Members/roche/m9000/index.cnxml"/>
+    </entry>
+
+    <entry>
+      <link rel="edit-media"
+            href="http://cnx.org/Members/roche/m9000/picture1.png"/>
+    </entry>
+
+    <entry>
+      <link rel="edit-media"
+            href="http://cnx.org/Members/roche/m9000/picture2.png"/>
+    </entry>
+
+</feed>

@@ -11,4 +11,9 @@
   <include file="profiles.zcml" />
   <i18n:registerTranslations directory="locales" />
 
+  <five:implements                                                              
+      class="Products.ATContentTypes.content.document.ATDocument"
+      interface="rhaptos.atompub.plone.interfaces.IAtomFeedProvider"
+      /> 
+
 </configure>

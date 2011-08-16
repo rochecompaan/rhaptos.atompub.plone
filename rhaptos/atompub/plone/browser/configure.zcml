@@ -10,6 +10,21 @@
         permission="zope2.View"
         />
 
+    <browser:page
+        for="*"
+        name="atompub-entry"
+        class=".atompub.AtomPubService"
+        permission="zope2.View"
+        />
+
+    <browser:page
+        for="rhaptos.atompub.plone.interfaces.IAtomFeedProvider"
+        name="atom.feed"
+        class=".atompub.AtomFeed"
+        template="atom.pt"
+        permission="zope2.View"
+        />
+
     <adapter
         for="Products.CMFCore.interfaces.IFolderish
              zope.publisher.interfaces.http.IHTTPRequest"
