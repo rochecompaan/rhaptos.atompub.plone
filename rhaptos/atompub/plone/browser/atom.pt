@@ -1,32 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom"
-    xmlns:tal="http://xml.zope.org/namespaces/tal"
-    xmlns:metal="http://xml.zope.org/namespaces/metal">
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      tal:define="portal_syndication context/portal_syndication;
+                  objects python:list(portal_syndication.getSyndicatableContent(context))">
 
-    <!-- feed spoof comment - move above feed to get browser to show xml  -->
+ <title tal:content="context/title_or_id">Atom Feed</title>
+     <subtitle tal:content="context/Description">Subtitle</subtitle>
+ <link tal:attributes="href context/absolute_url" rel="self" />
+     <updated tal:content="python:portal_syndication.getHTML4UpdateBase(context) or default">2011-12-20T12:00+00:00</updated>
+ <id tal:content="context/Identifier">Id</id>
 
-    <title type="text" tal:content="context/Title">
-        Document title
-    </title>
-    <author tal:content="context/Creator">rhaptos</author>
-    <id tal:content="context/getId">Unique id</id>
-    <license tal:content="context/getLicense|nothing">
-        http://creativecommons.org/licenses/by/3.0/
-    </license>
-
-    <entry>
-      <link rel="edit-media"
-            href="http://cnx.org/Members/roche/m9000/index.cnxml"/>
-    </entry>
-
-    <entry>
-      <link rel="edit-media"
-            href="http://cnx.org/Members/roche/m9000/picture1.png"/>
-    </entry>
-
-    <entry>
-      <link rel="edit-media"
-            href="http://cnx.org/Members/roche/m9000/picture2.png"/>
-    </entry>
+ <entry tal:repeat="obj objects">
+   <title tal:content="obj/title_or_id">Title</title>
+   <link tal:attributes="href obj/Identifier" />
+   <id tal:content="obj/Identifier">ID</id>
+   <summary tal:content="obj/Description">Summary</summary>
+   <author>
+     <name tal:content="obj/Creator">Author</name>
+   </author>
+   <rights tal:condition="obj/Rights" tal:content="obj/Rights">Rights</rights>
+   <updated tal:content="python:obj.modified().HTML4()">2011-12-20T12:00+00:00</updated>
+ </entry>
 
 </feed>

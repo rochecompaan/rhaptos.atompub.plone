@@ -18,8 +18,8 @@
         />
 
     <browser:page
-        for="rhaptos.atompub.plone.interfaces.IAtomFeedProvider"
-        name="atom.feed"
+        for="Products.ATContentTypes.interface.folder.IATFolder"
+        name="atom"
         class=".atompub.AtomFeed"
         template="atom.pt"
         permission="zope2.View"
