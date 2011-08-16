@@ -19,7 +19,7 @@
      <name tal:content="obj/Creator">Author</name>
    </author>
    <rights tal:condition="obj/Rights" tal:content="obj/Rights">Rights</rights>
-   <updated tal:content="python:obj.modified().HTML4()">2011-12-20T12:00+00:00</updated>
+   <updated tal:content="python:obj.modified">2011-12-20T12:00+00:00</updated>
  </entry>
 
 </feed>
