@@ -121,6 +121,12 @@ class AtomPubService(BrowserView):
             return result
 
         return 'Nothing to do'
+    
+
+    def getContent(self, item):
+        if item.portal_type == 'File':
+            return item.getFile().data
+        return getattr(item, 'rawText', None)
 
 
     def metadata(self, item):
@@ -191,7 +197,7 @@ class PloneFolderAtomPubAdapter(object):
         registry = getToolByName(context, 'content_type_registry')
         typeObjectName = registry.findTypeName(name, content_type, body)
         context.invokeFactory(typeObjectName, name)
-        obj = aq_base(context._getOb(name))
+        obj = context._getOb(name)
         return obj
 
 
@@ -252,9 +258,26 @@ class PloneFolderAtomPubAdapter(object):
 
 
 class AtomFeed(BrowserView):
-    """
+    """ Supporting methods for the atom.pt page template.
     """
     implements(IAtomFeed)
 
-    def __call__(self):
-        return self.index()
+
+    def __init__(self, context, request):
+        super(AtomFeed, self).__init__(context, request)
+        self.ps = getToolByName(self.context, "portal_syndication")
+
+
+    def isSyndicationAllowed(self):
+        """ Check whether syndication is allowed in this context.
+        """
+        return self.ps.isSyndicationAllowed(self.context)
+
+
+    def syndicatableContent(self):
+        return self.ps.getSyndicatableContent(self.context)
+
+
+    def updateBase(self):
+        """Return the date of the last update in HTML4 form as a string"""
+        return self.ps.getHTML4UpdateBase(self.context)

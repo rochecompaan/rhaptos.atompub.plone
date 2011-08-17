@@ -2,12 +2,12 @@
 <feed xmlns="http://www.w3.org/2005/Atom"
       xmlns:tal="http://xml.zope.org/namespaces/tal"
       tal:define="portal_syndication context/portal_syndication;
-                  objects python:list(portal_syndication.getSyndicatableContent(context))">
+                  objects view/syndicatableContent;">
 
  <title tal:content="context/title_or_id">Atom Feed</title>
      <subtitle tal:content="context/Description">Subtitle</subtitle>
  <link tal:attributes="href context/absolute_url" rel="self" />
-     <updated tal:content="python:portal_syndication.getHTML4UpdateBase(context) or default">2011-12-20T12:00+00:00</updated>
+     <updated tal:content="view/UpdateBase | default">2011-12-20T12:00+00:00</updated>
  <id tal:content="context/Identifier">Id</id>
 
  <entry tal:repeat="obj objects">
