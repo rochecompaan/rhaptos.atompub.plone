@@ -19,7 +19,7 @@
             John Doe
         </name>
     </author>
-    <content tal:content="entry/getRawText">
+    <content tal:content="python:view.getContent(entry)">
         Some text.
     </content>
     <link rel="edit"

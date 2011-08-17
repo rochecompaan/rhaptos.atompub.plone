@@ -26,11 +26,11 @@ from rhaptos.atompub.plone.browser.atompub import AtomPubService
 # replace ../../ with os.cwd
 # move files into data subdir
 
-PATH_PREFIX = '../../src/rhaptos.atompub.plone/rhaptos/atompub/plone/tests/data/'
-
-BAD_FILE = PATH_PREFIX + 'bad_atom.xml'
-GOOD_FILE = PATH_PREFIX + 'good_atom.xml'
-EXPECTED_RESULT = PATH_PREFIX + 'atom_post_expected_result.xml'
+current_dir = os.path.dirname(__file__)
+PATH_PREFIX = os.path.join(current_dir, 'data')
+BAD_FILE = os.path.join(PATH_PREFIX, 'bad_atom.xml')
+GOOD_FILE = os.path.join(PATH_PREFIX, 'good_atom.xml')
+EXPECTED_RESULT = os.path.join(PATH_PREFIX, 'atom_post_expected_result.xml')
 
 GIF_FILE = {'filename': 'beach.gif',
             'extension': 'gif',
@@ -45,6 +45,26 @@ class TestAtomPub(PloneTestCase.FunctionalTestCase):
     def afterSetUp(self):
         self.addProfile('rhaptos.atompub.plone:default')
         super(TestAtomPub, self).afterSetUp()
+
+    
+    def testAtomFeedView(self):
+        """
+        Add a folder and a file.
+        Get the atom feed.
+        """
+        creation_date = DateTime.DateTime()
+        contents = 'A test file'
+
+        id = self.folder.invokeFactory('Folder', 'workspace')
+        folder = self.folder._getOb(id)
+        id = folder.invokeFactory('File', 'test_file')
+        file = folder._getOb(id)
+        file.creation_date = creation_date
+        file.setFile(contents)
+
+        view = folder.restrictedTraverse('@@atom')
+        atom = view()
+        dom = parseString(atom)
 
 
     def test_existsPublishAtomBrowserView(self):
@@ -96,7 +116,7 @@ class TestAtomPub(PloneTestCase.FunctionalTestCase):
 
     def _test_uploadImage(self, details_dict):
         filename = details_dict['filename']
-        path = PATH_PREFIX + filename
+        path = os.path.join(PATH_PREFIX, filename)
         image_file = open(path, 'rb')
         image_content = image_file.read()
         image_file.close()

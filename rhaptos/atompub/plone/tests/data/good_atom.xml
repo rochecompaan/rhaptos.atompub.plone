@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <entry xmlns="http://www.w3.org/2005/Atom"
        xmlns:dcterms="http://purl.org/dc/terms/"
+       xmlns:md="http://cnx.rice.edu/mdml"
        xmlns:cnxml="http://cnx.rice.edu/cnxml" >
   <title>Atom-Powered Robots Run Amok</title>
   <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
