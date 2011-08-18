@@ -169,7 +169,7 @@ class PloneFolderAtomPubAdapter(object):
 
 
     def __call__(self):
-        content_type = getHeader(self.request, 'content-type').strip(';')
+        content_type = getHeader(self.request, 'content-type').split(';')[0]
         disposition = getHeader(self.request, 'content-disposition')
         slug = getHeader(self.request, 'slug')
         filename = None
