@@ -183,7 +183,12 @@ class PloneFolderAtomPubAdapter(object):
                 pass
 
         filename = self.generateFilename(filename)
-        obj = self.createObject(self.context, filename, content_type, self.request)
+        if (disposition is not None or slug is not None) and \
+            filename in self.context.objectIds():
+            obj = self.context._getOb(filename)
+        else:
+            obj = self.createObject(self.context, filename, content_type, self.request)
+
         obj = self.updateObject(
                 obj, filename, self.request, self.response, content_type)
         return obj
