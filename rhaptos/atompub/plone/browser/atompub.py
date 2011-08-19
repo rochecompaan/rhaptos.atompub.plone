@@ -22,6 +22,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.Archetypes.Marshall import formatRFC822Headers
 
 from rhaptos.atompub.plone.interfaces import IAtomPubServiceAdapter
+from rhaptos.atompub.plone.exceptions import PreconditionFailed
 
 
 METADATA_MAPPING =\
@@ -185,10 +186,9 @@ class PloneFolderAtomPubAdapter(object):
         filename = self.generateFilename(filename)
         if (disposition is not None or slug is not None) and \
             filename in self.context.objectIds():
-            obj = self.context._getOb(filename)
-        else:
-            obj = self.createObject(self.context, filename, content_type, self.request)
+            raise PreconditionFailed("%s is in use" % filename)
 
+        obj = self.createObject(self.context, filename, content_type, self.request)
         obj = self.updateObject(
                 obj, filename, self.request, self.response, content_type)
         return obj
