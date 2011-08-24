@@ -19,7 +19,7 @@
 
     <browser:page
         for="Products.ATContentTypes.interface.folder.IATFolder"
-        name="atom"
+        name="atom.feed"
         class=".atompub.AtomFeed"
         template="atom.pt"
         permission="zope2.View"
