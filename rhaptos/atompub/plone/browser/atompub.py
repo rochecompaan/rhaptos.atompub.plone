@@ -58,15 +58,18 @@ METADATA_MAPPING =\
          'keywords': 'keywords',
          }
 
-ATOMPUB_CONTENT_TYPES = ['application/atom+xml',
-                         'application/atom+xml;type=entry',
-                        ]
+ATOMPUB_CONTENT_TYPES = ('application/atom+xml',)
 
 def getHeader(request, name, default=None):
     """ Work around the change from get_header to getHeader in a way that will
         survive deprecation of the former. """
     return getattr(request, 'getHeader', request.get_header)(
         name, default)
+
+def getContentType(h):
+    """ Takes the value of the Content-Type header, and return only the
+        major/minor part, ignoring the options. """
+    return h.split(';')[0].strip()
 
 class IAtomPubService(Interface):
     """ Marker interface for AtomPuv service """
@@ -113,7 +116,7 @@ class AtomPubService(BrowserView):
         response.setStatus(201)
 
         # return the correct result based on the content type
-        content_type = getHeader(self.request, 'content-type').strip(';')
+        content_type = getContentType(getHeader(self.request, 'content-type'))
         if content_type in ATOMPUB_CONTENT_TYPES:
             result = self.atom_entry_document(entry=obj)
             return result
@@ -149,7 +152,6 @@ class PloneFolderAtomPubAdapter(object):
         self.context = context
         self.request = request
         self.response = request.response
-        self.ATOMPUB_CONTENT_TYPES = ATOMPUB_CONTENT_TYPES
 
 
     def generateFilename(self, name, type_name=None):
@@ -162,7 +164,7 @@ class PloneFolderAtomPubAdapter(object):
         plone_utils = getToolByName(self.context, 'plone_utils')
         if name is None:
             if type_name is None:
-                content_type = getHeader(self.request, 'content-type').strip(';')
+                content_type = getContentType(getHeader(self.request, 'content-type'))
                 type_name = plone_utils.normalizeString(content_type)
             return self.context.generateUniqueId(type_name=type_name)
         else:
@@ -170,7 +172,7 @@ class PloneFolderAtomPubAdapter(object):
 
 
     def __call__(self):
-        content_type = getHeader(self.request, 'content-type').split(';')[0]
+        content_type = getContentType(getHeader(self.request, 'content-type'))
         disposition = getHeader(self.request, 'content-disposition')
         slug = getHeader(self.request, 'slug')
         filename = None
