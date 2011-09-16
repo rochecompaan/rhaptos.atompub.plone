@@ -3,3 +3,6 @@ class PreconditionFailed(Exception):
 
 class UnsupportedMediaType(Exception):
     """ Raise this when you want a 415 response. """
+
+class OverwriteNotPermitted(Exception):
+    """ Another object with the same name already exist. """
