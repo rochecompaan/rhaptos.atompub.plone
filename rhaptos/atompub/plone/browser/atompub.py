@@ -22,7 +22,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.Archetypes.Marshall import formatRFC822Headers
 
 from rhaptos.atompub.plone.interfaces import IAtomPubServiceAdapter
-from rhaptos.atompub.plone.exceptions import PreconditionFailed
+from rhaptos.atompub.plone.exceptions import OverwriteNotPermitted
 
 
 METADATA_MAPPING =\
@@ -200,7 +200,7 @@ class PloneFolderAtomPubAdapter(object):
         filename = self.generateFilename(filename)
         if (disposition is not None or slug is not None) and \
             filename in self.context.objectIds():
-            raise PreconditionFailed("%s is in use" % filename)
+            raise OverwriteNotPermitted, filename
 
         obj = self.createObject(self.context, filename, content_type, self.request)
         obj = self.updateObject(
