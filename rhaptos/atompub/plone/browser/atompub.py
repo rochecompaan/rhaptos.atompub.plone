@@ -60,6 +60,18 @@ METADATA_MAPPING =\
 
 ATOMPUB_CONTENT_TYPES = ('application/atom+xml',)
 
+
+def getSiteEncoding(context):
+    """ if we have on return it,
+        if not, figure out what it is, store it and return it.
+    """
+    encoding = 'utf-8'
+    properties = getToolByName(context, 'portal_properties')
+    site_properties = getattr(properties, 'site_properties', None)
+    if site_properties:
+        encoding = site_properties.getProperty('default_charset')
+    return encoding
+
 def getHeader(request, name, default=None):
     """ Work around the change from get_header to getHeader in a way that will
         survive deprecation of the former. """
@@ -252,9 +264,13 @@ class PloneFolderAtomPubAdapter(object):
         for prefix, uri in dom.documentElement.attributes.items():
             for name in mappings.keys():
                 value = dom.getElementsByTagNameNS(uri, name)
-                value = '\n'.join([str(v.firstChild.nodeValue).strip() for v in value \
-                                   if v.firstChild is not None]
-                                 )
+                # TODO: rather use v.firstChild.toxml().encode('encoding')
+                # where 'encoding' is the site encoding, the dom encoding or 'utf-8'
+                value = '\n'.join(
+                    [str(v.firstChild.nodeValue).strip() \
+                     for v in value if v.firstChild is not None
+                    ]
+                )
                 if value: headers.append((mappings[name], str(value)))
         return headers
 
