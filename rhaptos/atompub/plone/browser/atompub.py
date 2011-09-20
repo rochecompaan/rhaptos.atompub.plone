@@ -192,8 +192,8 @@ class PloneFolderAtomPubAdapter(object):
             filename = slug
         elif disposition is not None:
             try:
-                filename = [x for x in disposition.split(';') \
-                    if x.strip().startswith('filename=')][0][10:]
+                filename = [x.strip() for x in disposition.split(';') \
+                    if x.strip().startswith('filename=')][0][9:]
             except IndexError:
                 pass
 
