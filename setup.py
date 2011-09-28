@@ -25,7 +25,6 @@ setup(name='rhaptos.atompub.plone',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'lxml'
           # -*- Extra requirements: -*-
       ],
       entry_points="""
