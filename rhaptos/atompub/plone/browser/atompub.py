@@ -55,8 +55,7 @@ def show_error_document(func):
             return _abort_and_show(401, title="Unauthorized")
         except PreconditionFailed, e:
             return _abort_and_show(412, title="Precondition Failed",
-                summary="Precondition Failed",
-                treatment=str(e))
+                summary="Precondition Failed")
         except Forbidden, e:
             return _abort_and_show(403, summary = e.args[0])
         except Exception:
