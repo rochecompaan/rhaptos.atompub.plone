@@ -51,8 +51,8 @@ def show_error_document(func):
                 return ViewPageTemplateFile('errordocument.pt')(self, **kw)
         try:
             value = func(*args, **kwargs)
-        except Unauthorized:
-            return _abort_and_show(401, title="Unauthorized")
+        except Unauthorized, e:
+            return _abort_and_show(401, title="Unauthorized", summary=e.message)
         except PreconditionFailed, e:
             return _abort_and_show(412, title="Precondition Failed",
                 summary="Precondition Failed")
