@@ -171,27 +171,32 @@ class AtomPubService(BrowserView):
 
         # return the correct result based on the content type
         content_type = getContentType(getHeader(self.request, 'content-type'))
+        view = self.__of__(self.context)
         if content_type in ATOMPUB_CONTENT_TYPES:
-            result = self.atom_entry_document(entry=obj)
-            return result
+            pt = self.atom_entry_document.__of__(view)
+            return pt(entry=obj)
         else:
-            result = self.media_entry_representation(entry=obj)
-            return result
-
-        return 'Nothing to do'
+            pt = self.media_entry_representation.__of__(view)
+            return pt(entry=obj)
     
 
-    def getContent(self, item):
+    def getItemContent(self, item):
+        """ Get the file or local content.
+        """
         if item.portal_type == 'File':
             return item.getFile().data
         return getattr(item, 'rawText', None)
 
 
     def metadata(self, item):
+        """ Get all metadata headers
+        """
         return item.getMetadataHeaders()
 
 
     def formatMetadata(self, data):
+        """ Format the metadata for the template
+        """
         # <dcterms:title>Title</dcterms:title>
         name = data[0].lower()
         content = data[1]
@@ -224,8 +229,17 @@ class PloneFolderAtomPubAdapter(object):
         else:
             return plone_utils.normalizeString(name)
 
-
+    
     def __call__(self):
+        # first let's check if the authenticated member has permission
+        pmt = getToolByName(self.context, 'portal_membership')
+        member = pmt.getAuthenticatedMember()
+        if not pmt.checkPermission('Modify portal content', self.context):
+            raise Unauthorized(
+                'User %s does not have the required permissions '
+                'to add content to %s.' %(member.getId(), self.context.getId())
+            )
+
         content_type = getContentType(getHeader(self.request, 'content-type'))
         disposition = getHeader(self.request, 'content-disposition')
         slug = getHeader(self.request, 'slug')
