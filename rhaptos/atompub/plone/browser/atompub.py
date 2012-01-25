@@ -58,6 +58,8 @@ def show_error_document(func):
                 summary="Precondition Failed")
         except Forbidden, e:
             return _abort_and_show(403, summary = e.args[0])
+        except ValueError, e:
+            return _abort_and_show(412, summary = e.args[0])
         except Exception:
             formatted_tb = traceback.format_exc()
             logger.error(formatted_tb)
